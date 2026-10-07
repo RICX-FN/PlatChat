@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlatChat - Unified OBS Dock</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Barra Superior / Header do OBS Dock -->
+    <header class="dock-header">
+      <div class="dock-header-top">
+        <div class="brand">
+          <span class="brand-title">PlatChat</span>
+          <span class="status-indicator-container">
+            <span id="twitch-status-pill" class="badge-status status-disconnected" title="Twitch: Desconectado">
+              <svg class="icon" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+              <span class="status-text">Twitch</span>
+            </span>
+            <span id="youtube-status-pill" class="badge-status status-disconnected" title="YouTube: Desconectado">
+              <svg class="icon" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <span class="status-text">YouTube</span>
+            </span>
+          </span>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-toggle-config" class="btn-icon" title="Configurar Canais e Conexões" aria-label="Configurações">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Painel Colapsável de Configurações -->
+      <div id="config-drawer" class="config-drawer">
+        <!-- Config Twitch -->
+        <div class="config-group">
+          <div class="config-title">
+            <span class="dot-platform twitch-dot"></span>
+            <strong>Twitch</strong> (IRC Anônimo)
+          </div>
+          <div class="input-row">
+            <input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false">
+            <button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button>
+          </div>
+        </div>
+
+        <!-- Config YouTube OAuth 2.0 -->
+        <div class="config-group">
+          <div class="config-title">
+            <span class="dot-platform youtube-dot"></span>
+            <strong>YouTube</strong> (Login Oficial Google)
+          </div>
+
+          <!-- Estado Não Autenticado -->
+          <div id="yt-unauth-box" class="yt-auth-box">
+            <button id="btn-google-login" class="btn btn-google">
+              <svg width="14" height="14" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.665-5.17 3.665-9.09z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.09C3.25 21.3 7.31 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.32a7.18 7.18 0 0 1 0-4.64V6.59H1.27a11.96 11.96 0 0 0 0 10.82l4.01-3.09z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.59l4.01 3.09c.95-2.83 3.6-4.93 6.72-4.93z"/>
+              </svg>
+              Conectar YouTube (Google Login)
+            </button>
+            <div class="hint-text">Autorize sua conta para detectar automaticamente o chat da sua live ativa.</div>
+          </div>
+
+          <!-- Estado Autenticado -->
+          <div id="yt-auth-box" class="yt-auth-box hidden">
+            <div class="yt-profile-row">
+              <img id="yt-channel-avatar" class="yt-profile-avatar" src="" alt="Avatar">
+              <div class="yt-profile-info">
+                <div id="yt-channel-title" class="yt-profile-name">Canal Conectado</div>
+                <div id="yt-live-status-pill" class="yt-live-tag tag-offline">Sem live ativa</div>
+              </div>
+            </div>
+            <div class="yt-actions-row">
+              <button id="btn-youtube-detect" class="btn btn-sm btn-ghost" title="Procurar transmissão ao vivo ativa agora">
+                🔄 Buscar Live
+              </button>
+              <button id="btn-youtube-logout" class="btn btn-sm btn-ghost btn-danger" title="Desconectar conta do Google">
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ferramentas e Testes -->
+        <div class="drawer-footer">
+          <button id="btn-test-twitch" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Twitch">Simular Twitch</button>
+          <button id="btn-test-youtube" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do YouTube">Simular YouTube</button>
+          <button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger" title="Limpar mensagens visíveis">Limpar</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Área de Exibição das Mensagens do Chat -->
+    <main id="chat-container" class="chat-container">
+      <div id="messages-list" class="messages-list">
+        <!-- Mensagem de boas-vindas / guia inicial -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">💬</div>
+          <h3>Chat Unificado Pronto</h3>
+          <p>Conecte seu canal da Twitch ou faça Login com o Google no YouTube pelo botão de configurações acima para iniciar o monitoramento em tempo real.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Botão Flutuante de Rolagem Pausada -->
+    <div id="scroll-bottom-pill" class="scroll-bottom-pill hidden">
+      <button id="btn-scroll-bottom" class="btn-scroll-action">
+        <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+        <span id="scroll-pill-text">Novas mensagens</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
