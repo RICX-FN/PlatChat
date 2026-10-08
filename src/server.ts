@@ -41,6 +41,31 @@ const chatWsServer = new ChatWsServer(
 );
 
 /* ==========================================================================
+   Rotas de Conformidade Legal & Páginas Institucionais (Google OAuth)
+   ========================================================================== */
+
+/**
+ * Rota principal que serve a página do PlatChat
+ */
+app.get('/', (_req, res) => {
+  res.sendFile(path.resolve(publicDir, 'index.html'));
+});
+
+/**
+ * Página de Política de Privacidade do PlatChat (obrigatória para verificação do Google OAuth)
+ */
+app.get('/privacy', (_req, res) => {
+  res.sendFile(path.resolve(publicDir, 'privacy.html'));
+});
+
+/**
+ * Página de Termos de Serviço do PlatChat (obrigatória para verificação do Google OAuth)
+ */
+app.get('/terms', (_req, res) => {
+  res.sendFile(path.resolve(publicDir, 'terms.html'));
+});
+
+/* ==========================================================================
    Rotas de Autenticação OAuth 2.0 (Google / YouTube)
    ========================================================================== */
 

@@ -568,7 +568,7 @@ input[type="password"]:focus {
 /* Botão Flutuante de Rolagem */
 .scroll-bottom-pill {
   position: absolute;
-  bottom: 10px;
+  bottom: 38px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
@@ -600,3 +600,40 @@ input[type="password"]:focus {
   background-color: #3b3e4f;
   transform: scale(1.02);
 }
+
+/* Rodapé de Conformidade Legal (Google OAuth) */
+.dock-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--bg-tertiary);
+  padding: 6px 10px;
+  flex-shrink: 0;
+  z-index: 10;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 11px;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--text-main);
+  text-decoration: underline;
+}
+
+.footer-sep {
+  color: var(--text-dim);
+  font-size: 10px;
+  opacity: 0.6;
+}
+

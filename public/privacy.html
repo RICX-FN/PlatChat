@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidade | PlatChat</title>
+  <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
+  <link rel="stylesheet" href="css/legal.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-lang="pt" data-theme="dark">
+
+  <!-- Barra de Navegação Superior -->
+  <header class="legal-navbar">
+    <div class="legal-navbar-inner">
+      <a href="/" class="legal-brand" title="Voltar ao PlatChat">
+        <div class="legal-brand-logo">P</div>
+        <span>PlatChat</span>
+      </a>
+
+      <nav class="legal-nav-links">
+        <a href="/" class="legal-nav-link">
+          <span class="lang-pt">← Voltar ao Chat</span>
+          <span class="lang-en">← Back to Chat</span>
+        </a>
+        <a href="/privacy" class="legal-nav-link active">
+          <span class="lang-pt">Privacidade</span>
+          <span class="lang-en">Privacy</span>
+        </a>
+        <a href="/terms" class="legal-nav-link">
+          <span class="lang-pt">Termos de Serviço</span>
+          <span class="lang-en">Terms of Service</span>
+        </a>
+      </nav>
+
+      <div class="legal-nav-controls">
+        <button id="btn-toggle-lang" class="ctrl-btn" type="button" aria-label="Alterar idioma / Switch language">
+          🌐 <span id="lang-label">EN</span>
+        </button>
+        <button id="btn-toggle-theme" class="ctrl-btn" type="button" aria-label="Alternar tema claro/escuro">
+          <span id="theme-icon">☀️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="legal-main">
+    
+    <!-- Cabeçalho da Página -->
+    <div class="legal-header-card">
+      <div class="legal-tag">
+        <span class="lang-pt">Conformidade e Transparência</span>
+        <span class="lang-en">Compliance &amp; Transparency</span>
+      </div>
+
+      <h1 class="legal-title">
+        <span class="lang-pt">Política de Privacidade</span>
+        <span class="lang-en">Privacy Policy</span>
+      </h1>
+
+      <div class="legal-meta">
+        <div class="legal-meta-item">
+          <strong>Aplicação:</strong> PlatChat
+        </div>
+        <div class="legal-meta-item">
+          <span class="lang-pt"><strong>Última atualização:</strong> Outubro de 2026</span>
+          <span class="lang-en"><strong>Last Updated:</strong> October 2026</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conteúdo Legal -->
+    <article class="legal-content">
+
+      <!-- ================= PORTUGUÊS ================= -->
+      <div class="lang-pt">
+        
+        <!-- Destaque YouTube API / Google Policy -->
+        <div class="callout callout-youtube">
+          <div class="callout-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            Declaração de Uso da API do YouTube
+          </div>
+          <p>
+            O <strong>PlatChat utiliza os Serviços da API do YouTube</strong> (YouTube API Services) para conectar e exibir em tempo real o chat das suas transmissões ao vivo. Ao utilizar as funcionalidades integradas ao YouTube no PlatChat, você concorda expressamente em cumprir os 
+            <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">Termos de Serviço do YouTube</a> 
+            e reconhece que seus dados são tratados em conformidade com a 
+            <a href="http://www.google.com/policies/privacy" target="_blank" rel="noopener noreferrer">Política de Privacidade do Google</a>.
+          </p>
+        </div>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">1. Visão Geral e Finalidade</h2>
+          <p class="legal-p">
+            Esta Política de Privacidade descreve como o <strong>PlatChat</strong> ("nós", "nosso" ou "aplicação") coleta, utiliza, armazena e protege as informações dos usuários ao utilizar nossa plataforma unificada de chat de transmissão (multistream chat dashboard para OBS Studio).
+          </p>
+          <p class="legal-p">
+            O PlatChat foi desenvolvido com o compromisso de privacidade desde a concepção (<em>privacy-by-design</em>). A aplicação opera localmente na máquina do criador de conteúdo, conectando-se diretamente às APIs oficiais do YouTube e aos servidores IRC da Twitch para exibir as mensagens de chat dos espectadores em uma única interface integrada.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">2. Informações Acessadas e Coletadas</h2>
+          <p class="legal-p">
+            O PlatChat acessa exclusivamente as informações técnicas e públicas estritamente necessárias para a prestação do serviço de monitoramento de chat ao vivo:
+          </p>
+
+          <h3 class="legal-h3">A. Integração com o YouTube (Google OAuth 2.0 e YouTube Data API v3)</h3>
+          <p class="legal-p">
+            Ao autorizar o PlatChat via login com o Google, solicitamos exclusivamente o escopo restrito de leitura: <code>https://www.googleapis.com/auth/youtube.readonly</code>. Os dados acessados incluem:
+          </p>
+          <ul class="legal-ul">
+            <li><strong>Perfil Básico do Canal:</strong> Identificador do canal (Channel ID), nome público do canal (Channel Title) e imagem de avatar para identificação visual na barra de conexões da interface.</li>
+            <li><strong>Transmissão Ativa:</strong> Título e identificador da transmissão ao vivo ativa (Live Broadcast) associada à conta, para obtenção automática do identificador da sala de chat (<code>liveChatId</code>).</li>
+            <li><strong>Mensagens do Chat ao Vivo:</strong> Mensagens públicas enviadas pelos espectadores durante a transmissão (conteúdo textual, nome de exibição do autor, foto de perfil, selos/badges de membro/moderador e horário de envio).</li>
+            <li><strong>Tokens de Autenticação OAuth:</strong> Tokens de acesso (<code>access_token</code>) e tokens de renovação (<code>refresh_token</code>) emitidos pelo Google para manter a conexão autorizada sem necessidade de login manual a cada reinicialização.</li>
+          </ul>
+
+          <h3 class="legal-h3">B. Integração com a Twitch</h3>
+          <p class="legal-p">
+            A conexão com a Twitch utiliza o protocolo padrão público IRC WebSocket (<code>irc-ws.chat.twitch.tv</code>) de forma anônima:
+          </p>
+          <ul class="legal-ul">
+            <li>O usuário fornece unicamente o nome público do canal a ser monitorado.</li>
+            <li>Nenhuma senha, token OAuth pessoal da Twitch ou dado privado de conta é coletado ou solicitado.</li>
+            <li>As mensagens públicas enviadas na sala de chat especificada são recebidas e renderizadas no painel unificado.</li>
+          </ul>
+
+          <h3 class="legal-h3">C. Dados Não Coletados</h3>
+          <p class="legal-p">
+            O PlatChat <strong>NÃO</strong> acessa, armazena nem processa: senhas de contas, dados de pagamento ou cartão de crédito, mensagens privadas ou e-mails, listas de contatos, histórico de navegação ou quaisquer informações além das mensagens públicas do chat da sua transmissão.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">3. Como Utilizamos as Informações</h2>
+          <p class="legal-p">
+            As informações acessadas pelo PlatChat são utilizadas unicamente para:
+          </p>
+          <ul class="legal-ul">
+            <li>Exibir o fluxo unificado de mensagens da Twitch e do YouTube no navegador e no OBS Studio Browser Dock;</li>
+            <li>Detectar automaticamente a transmissão ao vivo ativa do seu canal no YouTube;</li>
+            <li>Renovar o token de acesso temporário com o Google via <code>refresh_token</code> de forma segura.</li>
+          </ul>
+          
+          <div class="callout callout-info">
+            <div class="callout-title">Não Compartilhamento e Não Comercialização</div>
+            <p>
+              O PlatChat <strong>não vende, não aluga, não compartilha e não monetiza</strong> dados de usuários com terceiros, empresas de marketing, corretores de dados ou redes de publicidade. Não utilizamos cookies de rastreamento de terceiros nem ferramentas externas de análise comportamental.
+            </p>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">4. Armazenamento, Segurança e Retenção de Dados</h2>
+          <ul class="legal-ul">
+            <li><strong>Tokens OAuth:</strong> O token de autenticação emitido pelo Google é armazenado localmente no arquivo <code>data/youtube-tokens.json</code> na máquina onde o servidor PlatChat é executado. Esses dados não são enviados a servidores em nuvem externos mantidos pelo PlatChat.</li>
+            <li><strong>Mensagens de Chat:</strong> As mensagens transmitidas são mantidas temporariamente apenas na memória volátil (RAM) da aplicação em uma fila circular de curto prazo (máximo de 150 a 200 mensagens recentes) para entrega aos clientes WebSocket e renderização no dock. As mensagens <strong>não são gravadas em bancos de dados permanentes</strong>.</li>
+            <li><strong>Comunicação Criptografada:</strong> As comunicações com a API do Google e com a Twitch ocorrem obrigatoriamente através de canais seguros criptografados (HTTPS e WSS).</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">5. Revogação de Acesso e Exclusão de Dados</h2>
+          <p class="legal-p">
+            Você possui controle total sobre suas credenciais e pode revogar a autorização do PlatChat a qualquer momento através de dois métodos simples:
+          </p>
+
+          <h3 class="legal-h3">A. Desconexão Local pelo PlatChat</h3>
+          <p class="legal-p">
+            No painel de configurações do PlatChat, clique no botão <strong>"Sair"</strong> na seção do YouTube. Essa ação encerra imediatamente a sessão do YouTube e <strong>exclui permanentemente o arquivo de tokens local</strong> (<code>data/youtube-tokens.json</code>).
+          </p>
+
+          <h3 class="legal-h3">B. Revogação Direta pela Conta Google (Google Security Settings)</h3>
+          <p class="legal-p">
+            Conforme exigido pelas diretrizes do Google, você pode revogar o acesso concedido ao PlatChat diretamente na página oficial de gerenciamento de permissões de segurança da sua conta Google:
+          </p>
+          
+          <div class="callout callout-success">
+            <div class="callout-title">Página de Permissões da Conta Google</div>
+            <p>
+              Acesse 
+              <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer"><strong>https://myaccount.google.com/permissions</strong></a>, 
+              localize a aplicação <strong>PlatChat</strong> na lista de apps com acesso à sua conta e selecione <strong>"Remover acesso"</strong>. A partir desse momento, qualquer token anterior perderá imediatamente a validade junto aos servidores do Google.
+            </p>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">6. Links de Conformidade Obrigatória</h2>
+          <p class="legal-p">
+            Para mais informações sobre as políticas e termos dos serviços integrados:
+          </p>
+          <div class="legal-table-wrapper">
+            <table class="legal-table">
+              <thead>
+                <tr>
+                  <th>Serviço</th>
+                  <th>Documento Legal</th>
+                  <th>Endereço / Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>YouTube</strong></td>
+                  <td>Termos de Serviço do YouTube</td>
+                  <td><a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">https://www.youtube.com/t/terms</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Google</strong></td>
+                  <td>Política de Privacidade do Google</td>
+                  <td><a href="http://www.google.com/policies/privacy" target="_blank" rel="noopener noreferrer">http://www.google.com/policies/privacy</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Google</strong></td>
+                  <td>Configurações de Permissões de Segurança</td>
+                  <td><a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">https://myaccount.google.com/permissions</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Twitch</strong></td>
+                  <td>Termos de Serviço da Twitch</td>
+                  <td><a href="https://www.twitch.tv/p/legal/terms-of-service/" target="_blank" rel="noopener noreferrer">https://www.twitch.tv/p/legal/terms-of-service/</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">7. Privacidade de Crianças</h2>
+          <p class="legal-p">
+            O PlatChat não coleta intencionalmente dados de crianças menores de 13 anos. A aplicação se destina a criadores de conteúdo e streamers em conformidade com as idades mínimas estipuladas pelas plataformas YouTube e Twitch.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">8. Alterações nesta Política</h2>
+          <p class="legal-p">
+            Podemos atualizar esta Política de Privacidade periodicamente para refletir melhorias no produto ou atualizações nas exigências de conformidade das APIs do Google ou da Twitch. Recomendamos a consulta periódica desta página. A data da última revisão é sempre indicada no topo desta página.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">9. Contato e Dúvidas</h2>
+          <p class="legal-p">
+            Caso você tenha qualquer dúvida sobre esta Política de Privacidade ou sobre o tratamento de dados no PlatChat, consulte a documentação oficial ou abra uma questão no repositório do projeto.
+          </p>
+        </section>
+
+      </div>
+
+      <!-- ================= ENGLISH ================= -->
+      <div class="lang-en">
+
+        <!-- Highlight YouTube API / Google Policy -->
+        <div class="callout callout-youtube">
+          <div class="callout-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            YouTube API Services Disclosure
+          </div>
+          <p>
+            <strong>PlatChat uses YouTube API Services</strong> to detect your active live broadcasts and stream live chat messages to your dashboard. By using the YouTube features within PlatChat, you agree to be bound by the 
+            <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> 
+            and acknowledge that your data is processed in accordance with the 
+            <a href="http://www.google.com/policies/privacy" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.
+          </p>
+        </div>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">1. Overview and Purpose</h2>
+          <p class="legal-p">
+            This Privacy Policy explains how <strong>PlatChat</strong> ("we", "our", or "the application") accesses, collects, uses, stores, and protects user data when you use our multi-stream chat dashboard for OBS Studio.
+          </p>
+          <p class="legal-p">
+            PlatChat is designed with a strict privacy-by-design architecture. The application runs locally on the broadcaster's system, communicating directly with official YouTube APIs and Twitch IRC servers to present viewer chat messages in a unified, real-time interface.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">2. Data Accessed, Collected, and Stored</h2>
+          <p class="legal-p">
+            PlatChat accesses only the minimum technical and public information necessary to deliver real-time live chat aggregation:
+          </p>
+
+          <h3 class="legal-h3">A. YouTube Integration (Google OAuth 2.0 &amp; YouTube Data API v3)</h3>
+          <p class="legal-p">
+            When you sign in with Google, PlatChat requests the read-only scope: <code>https://www.googleapis.com/auth/youtube.readonly</code>. Data accessed includes:
+          </p>
+          <ul class="legal-ul">
+            <li><strong>Channel Profile Information:</strong> Channel ID, public Channel Title, and avatar thumbnail URL, used exclusively to display connected account status in the interface.</li>
+            <li><strong>Active Live Broadcast:</strong> Title and ID of your active live stream, used to locate the active live chat room (<code>liveChatId</code>).</li>
+            <li><strong>Live Chat Messages:</strong> Public messages submitted during the live broadcast, including message text, author display name, profile avatar URL, user badges (sponsor/moderator/owner), and publication timestamps.</li>
+            <li><strong>OAuth Authentication Tokens:</strong> Access tokens (<code>access_token</code>) and refresh tokens (<code>refresh_token</code>) issued by Google to maintain your authorized connection without requiring manual sign-in on every restart.</li>
+          </ul>
+
+          <h3 class="legal-h3">B. Twitch Integration</h3>
+          <p class="legal-p">
+            The Twitch connection uses the public Twitch IRC WebSocket interface (<code>irc-ws.chat.twitch.tv</code>) anonymously:
+          </p>
+          <ul class="legal-ul">
+            <li>Users provide only the public channel name to monitor.</li>
+            <li>No Twitch passwords, user tokens, or personal account credentials are required or stored.</li>
+            <li>Public chat messages sent in that channel are retrieved and rendered in the dashboard.</li>
+          </ul>
+
+          <h3 class="legal-h3">C. Data We Do NOT Collect</h3>
+          <p class="legal-p">
+            PlatChat does <strong>NOT</strong> access, collect, or store personal account passwords, credit card or financial information, private messages, emails, contact lists, or web browsing history.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">3. How We Use Information</h2>
+          <p class="legal-p">
+            Data accessed by PlatChat is used solely to:
+          </p>
+          <ul class="legal-ul">
+            <li>Render unified live chat streams from Twitch and YouTube in your browser and OBS Studio dock;</li>
+            <li>Detect active YouTube live broadcasts for your authenticated channel;</li>
+            <li>Automatically refresh expired access tokens using the <code>refresh_token</code>.</li>
+          </ul>
+          
+          <div class="callout callout-info">
+            <div class="callout-title">No Data Sale or Third-Party Sharing</div>
+            <p>
+              PlatChat <strong>does not sell, rent, lease, or share</strong> user personal data or chat messages with third parties, advertisers, data brokers, or marketing networks. No third-party tracking cookies or external analytics SDKs are used.
+            </p>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">4. Data Storage, Security, and Retention</h2>
+          <ul class="legal-ul">
+            <li><strong>OAuth Tokens:</strong> Authentication tokens are stored locally on the broadcaster's machine in <code>data/youtube-tokens.json</code>. Tokens are not transmitted to any external PlatChat cloud server.</li>
+            <li><strong>Chat Messages:</strong> Chat messages are retained exclusively in volatile system memory (RAM) in a short-lived FIFO queue (maximum 150 to 200 recent messages) to enable WebSocket delivery and smooth scrolling. Messages <strong>are never saved to permanent databases</strong>.</li>
+            <li><strong>Secure Transmission:</strong> All communications with Google and Twitch APIs use encrypted protocols (HTTPS / WSS).</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">5. Data Deletion and Revocation of Access</h2>
+          <p class="legal-p">
+            You maintain full control over your credentials and can revoke PlatChat's access at any time:
+          </p>
+
+          <h3 class="legal-h3">A. Local Disconnect within PlatChat</h3>
+          <p class="legal-p">
+            Open the PlatChat settings drawer and click <strong>"Sair" (Logout)</strong> in the YouTube section. This terminates the active session and <strong>immediately deletes the local tokens file</strong> (<code>data/youtube-tokens.json</code>) from your disk.
+          </p>
+
+          <h3 class="legal-h3">B. Revoking Access via Google Account Permissions</h3>
+          <p class="legal-p">
+            In compliance with Google API requirements, you can revoke PlatChat's access directly through your Google account security settings:
+          </p>
+          
+          <div class="callout callout-success">
+            <div class="callout-title">Google Account Security Permissions</div>
+            <p>
+              Visit 
+              <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer"><strong>https://myaccount.google.com/permissions</strong></a>, 
+              find <strong>PlatChat</strong> in the list of third-party apps, and click <strong>"Remove Access"</strong>. Once revoked, all previously issued tokens become immediately invalid on Google's servers.
+            </p>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">6. Mandatory Policy References</h2>
+          <div class="legal-table-wrapper">
+            <table class="legal-table">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Legal Document</th>
+                  <th>Direct Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>YouTube</strong></td>
+                  <td>YouTube Terms of Service</td>
+                  <td><a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer">https://www.youtube.com/t/terms</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Google</strong></td>
+                  <td>Google Privacy Policy</td>
+                  <td><a href="http://www.google.com/policies/privacy" target="_blank" rel="noopener noreferrer">http://www.google.com/policies/privacy</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Google</strong></td>
+                  <td>Google Security Permissions Settings</td>
+                  <td><a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">https://myaccount.google.com/permissions</a></td>
+                </tr>
+                <tr>
+                  <td><strong>Twitch</strong></td>
+                  <td>Twitch Terms of Service</td>
+                  <td><a href="https://www.twitch.tv/p/legal/terms-of-service/" target="_blank" rel="noopener noreferrer">https://www.twitch.tv/p/legal/terms-of-service/</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">7. Children's Privacy</h2>
+          <p class="legal-p">
+            PlatChat is intended for content creators and does not knowingly collect personal data from children under the age of 13.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">8. Policy Updates</h2>
+          <p class="legal-p">
+            We may update this policy periodically to maintain full alignment with Google and Twitch platform requirements. The most recent revision date is indicated at the top of this document.
+          </p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h2">9. Contact &amp; Inquiries</h2>
+          <p class="legal-p">
+            If you have any questions or feedback regarding this Privacy Policy, please open an issue in the PlatChat project repository.
+          </p>
+        </section>
+
+      </div>
+
+    </article>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="legal-footer">
+    <div class="legal-footer-inner">
+      <div>
+        <span>PlatChat &copy; 2026.</span>
+        <span class="lang-pt">Todos os direitos reservados.</span>
+        <span class="lang-en">All rights reserved.</span>
+      </div>
+      <div class="legal-footer-links">
+        <a href="/" class="legal-footer-link">
+          <span class="lang-pt">Início</span>
+          <span class="lang-en">Home</span>
+        </a>
+        <a href="/privacy" class="legal-footer-link">
+          <span class="lang-pt">Privacidade</span>
+          <span class="lang-en">Privacy</span>
+        </a>
+        <a href="/terms" class="legal-footer-link">
+          <span class="lang-pt">Termos de Serviço</span>
+          <span class="lang-en">Terms of Service</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script para alternância de idioma e tema -->
+  <script>
+    (() => {
+      const btnLang = document.getElementById('btn-toggle-lang');
+      const langLabel = document.getElementById('lang-label');
+      const btnTheme = document.getElementById('btn-toggle-theme');
+      const themeIcon = document.getElementById('theme-icon');
+
+      // Gerenciar Idioma (PT / EN)
+      let currentLang = localStorage.getItem('platchat_legal_lang') || 'pt';
+      function applyLang(lang) {
+        currentLang = lang;
+        document.body.setAttribute('data-lang', lang);
+        document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+        langLabel.textContent = lang === 'pt' ? 'EN' : 'PT';
+        localStorage.setItem('platchat_legal_lang', lang);
+      }
+      applyLang(currentLang);
+
+      btnLang.addEventListener('click', () => {
+        applyLang(currentLang === 'pt' ? 'en' : 'pt');
+      });
+
+      // Gerenciar Tema (Dark / Light)
+      let currentTheme = localStorage.getItem('platchat_legal_theme') || 'dark';
+      function applyTheme(theme) {
+        currentTheme = theme;
+        document.body.setAttribute('data-theme', theme);
+        themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        localStorage.setItem('platchat_legal_theme', theme);
+      }
+      applyTheme(currentTheme);
+
+      btnTheme.addEventListener('click', () => {
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      });
+    })();
+  </script>
+</body>
+</html>
