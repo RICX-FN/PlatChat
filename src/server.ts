@@ -4,8 +4,11 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import dotenv from 'dotenv';
 import { TwitchIrcService } from './services/twitch/twitchIrcService.js';
+import { YouTubePublicChatService } from './services/youtube/youtubePublicChatService.js';
 import { YouTubeAuthService } from './services/youtube/youtubeAuthService.js';
 import { YouTubeLiveChatService } from './services/youtube/youtubeLiveChatService.js';
+import { KickChatService } from './services/kick/kickChatService.js';
+import { TikTokLiveService } from './services/tiktok/tiktokLiveService.js';
 import { MessageQueue } from './services/queue/messageQueue.js';
 import { ChatWsServer } from './websocket/wsServer.js';
 
@@ -25,18 +28,24 @@ const publicDir = path.resolve(__dirname, '../public');
 app.use(express.static(publicDir));
 app.use(express.json());
 
-// Instanciação modular dos serviços
+// Instanciação modular dos serviços das 4 plataformas
 const twitchService = new TwitchIrcService();
+const youtubePublicService = new YouTubePublicChatService();
 const youtubeAuthService = new YouTubeAuthService();
-const youtubeLiveChatService = new YouTubeLiveChatService(youtubeAuthService);
+const youtubeOAuthService = new YouTubeLiveChatService(youtubeAuthService);
+const kickService = new KickChatService();
+const tiktokService = new TikTokLiveService();
 const messageQueue = new MessageQueue({ flushIntervalMs: 50, maxHistorySize: 150 });
 
-// Inicialização do servidor WebSocket
+// Inicialização do servidor WebSocket unificado
 const chatWsServer = new ChatWsServer(
   server, 
   twitchService, 
-  youtubeLiveChatService, 
+  youtubePublicService,
+  youtubeOAuthService, 
   youtubeAuthService, 
+  kickService,
+  tiktokService,
   messageQueue
 );
 
@@ -44,34 +53,22 @@ const chatWsServer = new ChatWsServer(
    Rotas de Conformidade Legal & Páginas Institucionais (Google OAuth)
    ========================================================================== */
 
-/**
- * Rota principal que serve a página do PlatChat
- */
 app.get('/', (_req, res) => {
   res.sendFile(path.resolve(publicDir, 'index.html'));
 });
 
-/**
- * Página de Política de Privacidade do PlatChat (obrigatória para verificação do Google OAuth)
- */
 app.get('/privacy', (_req, res) => {
   res.sendFile(path.resolve(publicDir, 'privacy.html'));
 });
 
-/**
- * Página de Termos de Serviço do PlatChat (obrigatória para verificação do Google OAuth)
- */
 app.get('/terms', (_req, res) => {
   res.sendFile(path.resolve(publicDir, 'terms.html'));
 });
 
 /* ==========================================================================
-   Rotas de Autenticação OAuth 2.0 (Google / YouTube)
+   Rotas Opcionais de Autenticação OAuth 2.0 (Google / YouTube)
    ========================================================================== */
 
-/**
- * Redireciona o streamer para a tela de consentimento do Google
- */
 app.get('/auth/google', (_req, res) => {
   try {
     if (!youtubeAuthService.isConfigured()) {
@@ -80,7 +77,7 @@ app.get('/auth/google', (_req, res) => {
         <html lang="pt-BR">
         <head>
           <meta charset="UTF-8">
-          <title>Configuração Necessária</title>
+          <title>Configuração Google OAuth</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #121214; color: #efeff1; padding: 30px; text-align: center; }
             .card { background: #1a1a1e; border: 1px solid #333; border-radius: 8px; max-width: 520px; margin: 40px auto; padding: 24px; text-align: left; }
@@ -90,12 +87,9 @@ app.get('/auth/google', (_req, res) => {
         </head>
         <body>
           <div class="card">
-            <h2>⚠️ Credenciais do Google Não Encontradas</h2>
-            <p>Para ativar o Login com Google no YouTube, você precisa definir no seu arquivo <code>.env</code>:</p>
-            <pre style="background: #26262d; padding: 12px; border-radius: 6px; font-size: 13px; overflow-x: auto;">GOOGLE_CLIENT_ID=seu_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=seu_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:${PORT}/auth/google/callback</pre>
-            <p style="font-size: 12px; color: #adadb8;">Crie essas credenciais no Google Cloud Console com o escopo <code>https://www.googleapis.com/auth/youtube.readonly</code>.</p>
+            <h2>ℹ️ Modo Direto sem Autenticação Disponível</h2>
+            <p>Você pode conectar o YouTube diretamente pelo painel digitando o <code>@canal</code> ou link da live, sem precisar de credenciais Google!</p>
+            <p>Se preferir usar OAuth corporativo, configure as variáveis <code>GOOGLE_CLIENT_ID</code> e <code>GOOGLE_CLIENT_SECRET</code> no seu <code>.env</code>.</p>
           </div>
         </body>
         </html>
@@ -109,9 +103,6 @@ GOOGLE_REDIRECT_URI=http://localhost:${PORT}/auth/google/callback</pre>
   }
 });
 
-/**
- * Callback onde o Google retorna com ?code=...
- */
 app.get('/auth/google/callback', async (req, res) => {
   const { code, error } = req.query;
 
@@ -133,15 +124,12 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 
   try {
-    // Troca código por Access Token e Refresh Token
     await youtubeAuthService.handleCallback(code);
 
-    // Imediatamente busca e inicia a transmissão ao vivo ativa do streamer
-    youtubeLiveChatService.detectAndJoinActiveLive().catch((err) => {
+    youtubeOAuthService.detectAndJoinActiveLive().catch((err) => {
       console.warn('[Server] Falha ao tentar conectar live pós-auth:', err.message);
     });
 
-    // Retorna página que notifica o OBS Dock e se auto-fecha
     res.send(`
       <!DOCTYPE html>
       <html lang="pt-BR">
@@ -200,34 +188,107 @@ app.get('/api/status', (_req, res) => {
     uptime: process.uptime(),
     timestamp: Date.now(),
     platforms: chatWsServer.getAllStatuses(),
-    youtubeConfigured: youtubeAuthService.isConfigured(),
+    youtubeOAuthAvailable: youtubeAuthService.isConfigured(),
     messageQueueHistoryCount: messageQueue.getHistory().length
   });
 });
 
+// Controle Twitch
+app.post('/api/twitch/connect', (req, res) => {
+  const { channel } = req.body;
+  if (!channel) return res.status(400).json({ error: 'Parâmetro channel é obrigatório' });
+  twitchService.joinChannel(channel);
+  res.json({ success: true, status: twitchService.getStatus() });
+});
+
+app.post('/api/twitch/disconnect', (_req, res) => {
+  twitchService.leaveChannel();
+  res.json({ success: true, status: twitchService.getStatus() });
+});
+
+// Controle YouTube Público (Direto sem autenticação)
+app.post('/api/youtube/connect', async (req, res) => {
+  const { channel } = req.body;
+  if (!channel) return res.status(400).json({ error: 'Parâmetro channel (@handle, ID ou URL) é obrigatório' });
+  const success = await youtubePublicService.joinChannel(channel);
+  res.json({ success, status: youtubePublicService.getStatus() });
+});
+
+app.post('/api/youtube/disconnect', (_req, res) => {
+  youtubePublicService.leaveChannel();
+  youtubeOAuthService.leaveLive();
+  res.json({ success: true, status: youtubePublicService.getStatus() });
+});
+
+// Controle YouTube OAuth
 app.post('/api/youtube/detect', async (_req, res) => {
-  const success = await youtubeLiveChatService.detectAndJoinActiveLive();
-  res.json({ success, status: youtubeLiveChatService.getStatus() });
+  const success = await youtubeOAuthService.detectAndJoinActiveLive();
+  res.json({ success, status: youtubeOAuthService.getStatus() });
 });
 
 app.post('/api/youtube/logout', (_req, res) => {
   youtubeAuthService.logout();
+  youtubePublicService.leaveChannel();
   res.json({ success: true });
 });
 
-// Inicialização opcional a partir de variáveis de ambiente
+// Controle Kick
+app.post('/api/kick/connect', async (req, res) => {
+  const { channel } = req.body;
+  if (!channel) return res.status(400).json({ error: 'Parâmetro channel é obrigatório' });
+  const success = await kickService.joinChannel(channel);
+  res.json({ success, status: kickService.getStatus() });
+});
+
+app.post('/api/kick/disconnect', (_req, res) => {
+  kickService.leaveChannel();
+  res.json({ success: true, status: kickService.getStatus() });
+});
+
+// Controle TikTok Live
+app.post('/api/tiktok/connect', async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Parâmetro username é obrigatório' });
+  const success = await tiktokService.joinChannel(username);
+  res.json({ success, status: tiktokService.getStatus() });
+});
+
+app.post('/api/tiktok/disconnect', (_req, res) => {
+  tiktokService.leaveChannel();
+  res.json({ success: true, status: tiktokService.getStatus() });
+});
+
+/* ==========================================================================
+   Inicialização Opcional a partir de Variáveis de Ambiente
+   ========================================================================== */
+
 if (process.env.AUTO_CONNECT_TWITCH) {
   console.log(`[AutoConnect] Conectando automaticamente à Twitch: ${process.env.AUTO_CONNECT_TWITCH}`);
   twitchService.joinChannel(process.env.AUTO_CONNECT_TWITCH);
 }
 
+if (process.env.AUTO_CONNECT_YOUTUBE) {
+  console.log(`[AutoConnect] Conectando automaticamente ao YouTube: ${process.env.AUTO_CONNECT_YOUTUBE}`);
+  youtubePublicService.joinChannel(process.env.AUTO_CONNECT_YOUTUBE);
+}
+
+if (process.env.AUTO_CONNECT_KICK) {
+  console.log(`[AutoConnect] Conectando automaticamente à Kick: ${process.env.AUTO_CONNECT_KICK}`);
+  kickService.joinChannel(process.env.AUTO_CONNECT_KICK);
+}
+
+if (process.env.AUTO_CONNECT_TIKTOK) {
+  console.log(`[AutoConnect] Conectando automaticamente ao TikTok Live: ${process.env.AUTO_CONNECT_TIKTOK}`);
+  tiktokService.joinChannel(process.env.AUTO_CONNECT_TIKTOK);
+}
+
 // Iniciar servidor HTTP
 server.listen(PORT, HOST, () => {
   console.log('====================================================');
-  console.log(`🚀 PlatChat Backend iniciado com sucesso!`);
+  console.log(`🚀 PlatChat Backend iniciado com sucesso! (4 Plataformas)`);
   console.log(`📡 Servidor HTTP & WebSocket: http://localhost:${PORT}`);
   console.log(`🖥️  OBS Custom Browser Dock URL: http://localhost:${PORT}`);
-  console.log(`🔐 Google OAuth Callback URI: ${process.env.GOOGLE_REDIRECT_URI || `http://localhost:${PORT}/auth/google/callback`}`);
+  console.log(`🟣 Twitch  |  🔴 YouTube  |  🟢 Kick  |  🎵 TikTok Live`);
   console.log('====================================================');
 });
 
@@ -235,7 +296,10 @@ server.listen(PORT, HOST, () => {
 const shutdown = () => {
   console.log('\n[Server] Encerrando serviços...');
   twitchService.leaveChannel();
-  youtubeLiveChatService.leaveLive();
+  youtubePublicService.leaveChannel();
+  youtubeOAuthService.leaveLive();
+  kickService.leaveChannel();
+  tiktokService.leaveChannel();
   chatWsServer.close();
   server.close(() => {
     console.log('[Server] Finalizado com sucesso.');

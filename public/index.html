@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google-site-verification" content="ExhClhldXe_nPMUy4cYlwNvuEWnmL0z4sSzKiSpVOEU" />
-  <title>PlatChat - Unified OBS Dock</title>
+  <title>PlatChat - Unified Multistream OBS Dock</title>
   <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,13 +19,28 @@
         <div class="brand">
           <span class="brand-title">PlatChat</span>
           <span class="status-indicator-container">
+            <!-- Twitch Pill -->
             <span id="twitch-status-pill" class="badge-status status-disconnected" title="Twitch: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
               <span class="status-text">Twitch</span>
             </span>
+
+            <!-- YouTube Pill -->
             <span id="youtube-status-pill" class="badge-status status-disconnected" title="YouTube: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
               <span class="status-text">YouTube</span>
+            </span>
+
+            <!-- Kick Pill -->
+            <span id="kick-status-pill" class="badge-status status-disconnected" title="Kick: Desconectado">
+              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M3 2h6v6h2.5L16 2h5l-6 7.5L21.5 22h-5L11.5 14H9v8H3V2z"/></svg>
+              <span class="status-text">Kick</span>
+            </span>
+
+            <!-- TikTok Pill -->
+            <span id="tiktok-status-pill" class="badge-status status-disconnected" title="TikTok: Desconectado">
+              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743 2.9 2.9 0 0 1 2.31-4.64c.298 0 .584.045.855.128V9.372a6.332 6.332 0 0 0-.855-.058C6.01 9.314 3 12.33 3 16.05c0 3.722 3.01 6.738 6.723 6.738 3.57 0 6.49-2.793 6.708-6.312V9.01a8.18 8.18 0 0 0 4.887 1.579v-3.49a4.84 4.84 0 0 1-1.729-.413z"/></svg>
+              <span class="status-text">TikTok</span>
             </span>
           </span>
         </div>
@@ -39,64 +54,96 @@
 
       <!-- Painel Colapsável de Configurações -->
       <div id="config-drawer" class="config-drawer">
-        <!-- Config Twitch -->
-        <div class="config-group">
-          <div class="config-title">
-            <span class="dot-platform twitch-dot"></span>
-            <strong>Twitch</strong> (IRC Anônimo)
-          </div>
-          <div class="input-row">
-            <input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false">
-            <button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button>
-          </div>
-        </div>
-
-        <!-- Config YouTube OAuth 2.0 -->
-        <div class="config-group">
-          <div class="config-title">
-            <span class="dot-platform youtube-dot"></span>
-            <strong>YouTube</strong> (Login Oficial Google)
+        <div class="config-grid">
+          <!-- Config Twitch -->
+          <div class="config-group">
+            <div class="config-title">
+              <span class="dot-platform twitch-dot"></span>
+              <strong>Twitch</strong> (IRC Anônimo)
+            </div>
+            <div class="input-row">
+              <input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false">
+              <button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button>
+            </div>
           </div>
 
-          <!-- Estado Não Autenticado -->
-          <div id="yt-unauth-box" class="yt-auth-box">
-            <button id="btn-google-login" class="btn btn-google">
-              <svg width="14" height="14" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.665-5.17 3.665-9.09z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.09C3.25 21.3 7.31 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.32a7.18 7.18 0 0 1 0-4.64V6.59H1.27a11.96 11.96 0 0 0 0 10.82l4.01-3.09z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.59l4.01 3.09c.95-2.83 3.6-4.93 6.72-4.93z"/>
-              </svg>
-              Conectar YouTube (Google Login)
-            </button>
-            <div class="hint-text">Autorize sua conta para detectar automaticamente o chat da sua live ativa.</div>
-          </div>
+          <!-- Config YouTube (Direto / Sem Autenticação) -->
+          <div class="config-group">
+            <div class="config-title">
+              <span class="dot-platform youtube-dot"></span>
+              <strong>YouTube</strong> (Chat Direto sem Login)
+            </div>
+            <div class="input-row">
+              <input type="text" id="youtube-channel-input" placeholder="ex: @LofiGirl, ID do canal ou link da live" autocomplete="off" spellcheck="false">
+              <button id="btn-youtube-connect" class="btn btn-youtube">Conectar</button>
+            </div>
+            <div class="hint-text">Cole o @handle do canal, ID ou link da live. Sem necessidade de login no Google!</div>
 
-          <!-- Estado Autenticado -->
-          <div id="yt-auth-box" class="yt-auth-box hidden">
-            <div class="yt-profile-row">
-              <img id="yt-channel-avatar" class="yt-profile-avatar" src="" alt="Avatar">
-              <div class="yt-profile-info">
-                <div id="yt-channel-title" class="yt-profile-name">Canal Conectado</div>
-                <div id="yt-live-status-pill" class="yt-live-tag tag-offline">Sem live ativa</div>
+            <!-- Opção Secundária Google OAuth (Avançado) -->
+            <details class="yt-advanced-details">
+              <summary class="yt-advanced-summary">Ou conectar via Google OAuth (Avançado)</summary>
+              <div id="yt-unauth-box" class="yt-auth-box">
+                <button id="btn-google-login" class="btn btn-google">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.665-5.17 3.665-9.09z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.09C3.25 21.3 7.31 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.32a7.18 7.18 0 0 1 0-4.64V6.59H1.27a11.96 11.96 0 0 0 0 10.82l4.01-3.09z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.59l4.01 3.09c.95-2.83 3.6-4.93 6.72-4.93z"/>
+                  </svg>
+                  Login com Google
+                </button>
               </div>
+              <div id="yt-auth-box" class="yt-auth-box hidden">
+                <div class="yt-profile-row">
+                  <img id="yt-channel-avatar" class="yt-profile-avatar" src="" alt="Avatar">
+                  <div class="yt-profile-info">
+                    <div id="yt-channel-title" class="yt-profile-name">Canal Conectado</div>
+                    <div id="yt-live-status-pill" class="yt-live-tag tag-offline">Sem live ativa</div>
+                  </div>
+                </div>
+                <div class="yt-actions-row">
+                  <button id="btn-youtube-detect" class="btn btn-sm btn-ghost" title="Procurar transmissão ativa">Buscar Live</button>
+                  <button id="btn-youtube-logout" class="btn btn-sm btn-ghost btn-danger" title="Desconectar conta Google">Sair</button>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Config Kick -->
+          <div class="config-group">
+            <div class="config-title">
+              <span class="dot-platform kick-dot"></span>
+              <strong>Kick</strong> (WebSocket Oficial)
             </div>
-            <div class="yt-actions-row">
-              <button id="btn-youtube-detect" class="btn btn-sm btn-ghost" title="Procurar transmissão ao vivo ativa agora">
-              Buscar Live
-              </button>
-              <button id="btn-youtube-logout" class="btn btn-sm btn-ghost btn-danger" title="Desconectar conta do Google">
-                Sair
-              </button>
+            <div class="input-row">
+              <input type="text" id="kick-channel-input" placeholder="ex: xqc, westcol ou link kick.com/..." autocomplete="off" spellcheck="false">
+              <button id="btn-kick-connect" class="btn btn-kick">Conectar</button>
             </div>
+            <div class="hint-text">Conexão WebSocket Pusher em tempo real com leitura de badges e emotes.</div>
+          </div>
+
+          <!-- Config TikTok Live -->
+          <div class="config-group">
+            <div class="config-title">
+              <span class="dot-platform tiktok-dot"></span>
+              <strong>TikTok Live</strong> (Webcast Push)
+            </div>
+            <div class="input-row">
+              <input type="text" id="tiktok-channel-input" placeholder="ex: @streamer ou nome do usuário" autocomplete="off" spellcheck="false">
+              <button id="btn-tiktok-connect" class="btn btn-tiktok">Conectar</button>
+            </div>
+            <div class="hint-text">Monitora comentários e presentes (gifts) de transmissões ao vivo ativas.</div>
           </div>
         </div>
 
-        <!-- Ferramentas e Testes -->
+        <!-- Ferramentas e Testes de Mensagens -->
         <div class="drawer-footer">
-          <button id="btn-test-twitch" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Twitch">Simular Twitch</button>
-          <button id="btn-test-youtube" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do YouTube">Simular YouTube</button>
-          <button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger" title="Limpar mensagens visíveis">Limpar</button>
+          <span class="drawer-footer-label">Testes:</span>
+          <button id="btn-test-twitch" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Twitch">Twitch</button>
+          <button id="btn-test-youtube" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do YouTube">YouTube</button>
+          <button id="btn-test-kick" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Kick">Kick</button>
+          <button id="btn-test-tiktok" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do TikTok Live">TikTok</button>
+          <button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger" title="Limpar mensagens visíveis">Limpar Chat</button>
         </div>
       </div>
     </header>
@@ -107,8 +154,8 @@
         <!-- Mensagem de boas-vindas / guia inicial -->
         <div class="empty-state" id="empty-state">
           <div class="empty-icon">💬</div>
-          <h3>Chat Unificado Pronto</h3>
-          <p>Conecte seu canal da Twitch ou faça Login com o Google no YouTube pelo botão de configurações acima para iniciar o monitoramento em tempo real.</p>
+          <h3>Chat Unificado PlatChat</h3>
+          <p>Conecte seus canais da <strong>Twitch</strong>, <strong>YouTube</strong>, <strong>Kick</strong> ou <strong>TikTok Live</strong> pelo botão de configurações acima para monitorar tudo em tempo real no OBS!</p>
         </div>
       </div>
     </main>
@@ -121,7 +168,7 @@
       </button>
     </div>
 
-    <!-- Rodapé de Conformidade Legal (Google OAuth Policy) -->
+    <!-- Rodapé Institucional -->
     <footer class="dock-footer" id="dock-footer">
       <div class="footer-links">
         <a href="/privacy" class="footer-link" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>

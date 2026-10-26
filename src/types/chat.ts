@@ -1,4 +1,4 @@
-export type Platform = 'twitch' | 'youtube' | 'system';
+export type Platform = 'twitch' | 'youtube' | 'kick' | 'tiktok' | 'system';
 
 export interface UnifiedChatMessage {
   /** Identificador único da mensagem gerado ou fornecido pela plataforma */
@@ -15,7 +15,7 @@ export interface UnifiedChatMessage {
   timestamp: number;
   /** Cor do nome do usuário em formato hexadecimal (se disponível) */
   color?: string;
-  /** Badges/insígnias do usuário (ex: moderador, subscriber, vip) */
+  /** Badges/insígnias do usuário (ex: moderador, subscriber, vip, verificado) */
   badges?: string[];
 }
 
@@ -30,6 +30,13 @@ export interface PlatformStatus {
   isAuthenticated?: boolean;
   hasActiveLive?: boolean;
   error?: string;
+}
+
+export interface AllPlatformStatuses {
+  twitch: PlatformStatus;
+  youtube: PlatformStatus;
+  kick: PlatformStatus;
+  tiktok: PlatformStatus;
 }
 
 export interface ClientCommand {

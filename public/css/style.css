@@ -16,6 +16,14 @@
   --youtube-bg-subtle: rgba(255, 51, 51, 0.12);
   --youtube-border: rgba(255, 51, 51, 0.4);
 
+  --kick-color: #53fc18;
+  --kick-bg-subtle: rgba(83, 252, 24, 0.12);
+  --kick-border: rgba(83, 252, 24, 0.4);
+
+  --tiktok-color: #00f2fe;
+  --tiktok-bg-subtle: rgba(0, 242, 254, 0.12);
+  --tiktok-border: rgba(0, 242, 254, 0.4);
+
   --status-connected: #00e676;
   --status-connecting: #ffab00;
   --status-disconnected: #65656e;
@@ -208,6 +216,8 @@ body {
 }
 .twitch-dot { background-color: var(--twitch-color); }
 .youtube-dot { background-color: var(--youtube-color); }
+.kick-dot { background-color: var(--kick-color); }
+.tiktok-dot { background-color: var(--tiktok-color); }
 
 .input-row {
   display: flex;
@@ -255,6 +265,23 @@ input[type="password"]:focus {
 .btn-twitch {
   background-color: var(--twitch-color);
   color: #fff;
+}
+
+.btn-youtube {
+  background-color: var(--youtube-color);
+  color: #fff;
+}
+
+.btn-kick {
+  background-color: var(--kick-color);
+  color: #0b0b0e;
+  font-weight: 700;
+}
+
+.btn-tiktok {
+  background-color: var(--tiktok-color);
+  color: #0b0b0e;
+  font-weight: 700;
 }
 
 .btn-disconnect {
@@ -358,6 +385,29 @@ input[type="password"]:focus {
   justify-content: space-between;
   gap: 6px;
   margin-top: 4px;
+}
+
+.yt-advanced-details {
+  margin-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 4px;
+}
+
+.yt-advanced-summary {
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+.yt-advanced-summary:hover {
+  color: var(--text-muted);
+}
+
+.drawer-footer-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .drawer-footer {
@@ -465,6 +515,14 @@ input[type="password"]:focus {
   border-left: 3px solid var(--youtube-color);
 }
 
+.chat-message.platform-kick {
+  border-left: 3px solid var(--kick-color);
+}
+
+.chat-message.platform-tiktok {
+  border-left: 3px solid var(--tiktok-color);
+}
+
 .chat-message.platform-system {
   border-left: 3px solid #ffab00;
   background-color: rgba(255, 171, 0, 0.05);
@@ -499,6 +557,16 @@ input[type="password"]:focus {
 
 .platform-youtube .avatar-fallback {
   background-color: var(--youtube-color);
+}
+
+.platform-kick .avatar-fallback {
+  background-color: #173809;
+  color: #53fc18;
+}
+
+.platform-tiktok .avatar-fallback {
+  background-color: #082d33;
+  color: #00f2fe;
 }
 
 /* Conteúdo da mensagem */
@@ -540,6 +608,18 @@ input[type="password"]:focus {
   background: var(--youtube-bg-subtle);
   color: #ff7575;
   border: 1px solid var(--youtube-border);
+}
+
+.platform-kick .platform-pill {
+  background: var(--kick-bg-subtle);
+  color: #6dfc3c;
+  border: 1px solid var(--kick-border);
+}
+
+.platform-tiktok .platform-pill {
+  background: var(--tiktok-bg-subtle);
+  color: #58f8ff;
+  border: 1px solid var(--tiktok-border);
 }
 
 .msg-username {

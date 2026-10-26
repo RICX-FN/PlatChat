@@ -6,15 +6,19 @@
     autoScroll: true,
     unreadWhilePaused: 0,
     twitchStatus: { status: 'disconnected', channel: null },
-    youtubeStatus: { status: 'disconnected', isAuthenticated: false, hasActiveLive: false },
-    maxDomMessages: 200
+    youtubeStatus: { status: 'disconnected', channel: null, isAuthenticated: false, hasActiveLive: false },
+    kickStatus: { status: 'disconnected', channel: null },
+    tiktokStatus: { status: 'disconnected', channel: null },
+    maxDomMessages: 250
   };
 
   // Elementos do DOM
   const elements = {
-    // Header & Status
+    // Header & Status Pills
     twitchStatusPill: document.getElementById('twitch-status-pill'),
     youtubeStatusPill: document.getElementById('youtube-status-pill'),
+    kickStatusPill: document.getElementById('kick-status-pill'),
+    tiktokStatusPill: document.getElementById('tiktok-status-pill'),
     btnToggleConfig: document.getElementById('btn-toggle-config'),
     configDrawer: document.getElementById('config-drawer'),
 
@@ -22,7 +26,11 @@
     twitchInput: document.getElementById('twitch-channel-input'),
     btnTwitchConnect: document.getElementById('btn-twitch-connect'),
 
-    // Formulário YouTube OAuth
+    // Formulário YouTube Direto (sem autenticação)
+    youtubeInput: document.getElementById('youtube-channel-input'),
+    btnYoutubeConnect: document.getElementById('btn-youtube-connect'),
+
+    // YouTube OAuth (Avançado)
     ytUnauthBox: document.getElementById('yt-unauth-box'),
     ytAuthBox: document.getElementById('yt-auth-box'),
     btnGoogleLogin: document.getElementById('btn-google-login'),
@@ -32,9 +40,19 @@
     btnYoutubeDetect: document.getElementById('btn-youtube-detect'),
     btnYoutubeLogout: document.getElementById('btn-youtube-logout'),
 
-    // Ferramentas
+    // Formulário Kick
+    kickInput: document.getElementById('kick-channel-input'),
+    btnKickConnect: document.getElementById('btn-kick-connect'),
+
+    // Formulário TikTok Live
+    tiktokInput: document.getElementById('tiktok-channel-input'),
+    btnTiktokConnect: document.getElementById('btn-tiktok-connect'),
+
+    // Ferramentas & Simulação
     btnTestTwitch: document.getElementById('btn-test-twitch'),
     btnTestYoutube: document.getElementById('btn-test-youtube'),
+    btnTestKick: document.getElementById('btn-test-kick'),
+    btnTestTiktok: document.getElementById('btn-test-tiktok'),
     btnClearChat: document.getElementById('btn-clear-chat'),
 
     // Chat
@@ -55,10 +73,19 @@
     connectWebSocket();
   }
 
-  // Carrega preferências do localStorage
+  // Carrega preferências salvas no localStorage
   function loadSavedSettings() {
     const savedTwitch = localStorage.getItem('platchat_twitch_channel');
-    if (savedTwitch) elements.twitchInput.value = savedTwitch;
+    if (savedTwitch && elements.twitchInput) elements.twitchInput.value = savedTwitch;
+
+    const savedYouTube = localStorage.getItem('platchat_youtube_channel');
+    if (savedYouTube && elements.youtubeInput) elements.youtubeInput.value = savedYouTube;
+
+    const savedKick = localStorage.getItem('platchat_kick_channel');
+    if (savedKick && elements.kickInput) elements.kickInput.value = savedKick;
+
+    const savedTikTok = localStorage.getItem('platchat_tiktok_channel');
+    if (savedTikTok && elements.tiktokInput) elements.tiktokInput.value = savedTikTok;
   }
 
   // Gerenciamento da conexão WebSocket
@@ -135,8 +162,10 @@
     }
   }
 
-  // Atualiza indicadores visuais de status
+  // Atualiza indicadores visuais de status para todas as plataformas
   function updatePlatformStatuses(statuses) {
+    if (!statuses) return;
+
     if (statuses.twitch) {
       state.twitchStatus = statuses.twitch;
       renderTwitchStatus(statuses.twitch);
@@ -146,8 +175,19 @@
       state.youtubeStatus = statuses.youtube;
       renderYouTubeStatus(statuses.youtube);
     }
+
+    if (statuses.kick) {
+      state.kickStatus = statuses.kick;
+      renderKickStatus(statuses.kick);
+    }
+
+    if (statuses.tiktok) {
+      state.tiktokStatus = statuses.tiktok;
+      renderTikTokStatus(statuses.tiktok);
+    }
   }
 
+  // Status Twitch
   function renderTwitchStatus(statusObj) {
     const pill = elements.twitchStatusPill;
     const btn = elements.btnTwitchConnect;
@@ -175,12 +215,37 @@
     pill.title = statusObj.error ? `Twitch: ${statusObj.error}` : `Twitch: ${statusObj.status}`;
   }
 
+  // Status YouTube (Direto + OAuth)
   function renderYouTubeStatus(statusObj) {
     const pill = elements.youtubeStatusPill;
+    const btnDirect = elements.btnYoutubeConnect;
     const textSpan = pill.querySelector('.status-text');
 
+    pill.className = `badge-status status-${statusObj.status}`;
+
+    // Atualiza botão de conexão direta
+    if (statusObj.status === 'connected') {
+      textSpan.textContent = statusObj.channel ? `YT: ${statusObj.channel}` : 'YouTube: Live';
+      btnDirect.textContent = 'Desconectar';
+      btnDirect.classList.add('btn-disconnect');
+    } else if (statusObj.status === 'connecting') {
+      textSpan.textContent = 'YouTube (...)';
+      btnDirect.textContent = 'Conectando...';
+      btnDirect.classList.remove('btn-disconnect');
+    } else if (statusObj.status === 'error') {
+      textSpan.textContent = 'YouTube (Erro)';
+      btnDirect.textContent = 'Reconectar';
+      btnDirect.classList.remove('btn-disconnect');
+    } else {
+      textSpan.textContent = 'YouTube';
+      btnDirect.textContent = 'Conectar';
+      btnDirect.classList.remove('btn-disconnect');
+    }
+
+    pill.title = statusObj.error ? `YouTube: ${statusObj.error}` : `YouTube: ${statusObj.status}`;
+
+    // Atualiza painel avançado OAuth se estiver logado
     if (statusObj.isAuthenticated) {
-      // Usuário logado via Google
       elements.ytUnauthBox.classList.add('hidden');
       elements.ytAuthBox.classList.remove('hidden');
 
@@ -194,29 +259,72 @@
       }
 
       if (statusObj.hasActiveLive) {
-        pill.className = 'badge-status status-connected';
-        textSpan.textContent = 'YouTube: Live';
-        pill.title = `YouTube: Conectado à live "${statusObj.liveTitle || 'Ao Vivo'}"`;
-
         elements.ytLiveStatusPill.className = 'yt-live-tag tag-live';
         elements.ytLiveStatusPill.textContent = `● Live: ${statusObj.liveTitle || 'Ao Vivo'}`;
       } else {
-        pill.className = 'badge-status status-connecting';
-        textSpan.textContent = 'YouTube: Autenticado';
-        pill.title = statusObj.error || 'YouTube autenticado, aguardando início de transmissão ao vivo.';
-
         elements.ytLiveStatusPill.className = 'yt-live-tag tag-offline';
         elements.ytLiveStatusPill.textContent = '○ Nenhuma live ativa';
       }
     } else {
-      // Usuário NÃO logado
       elements.ytUnauthBox.classList.remove('hidden');
       elements.ytAuthBox.classList.add('hidden');
-
-      pill.className = 'badge-status status-disconnected';
-      textSpan.textContent = 'YouTube';
-      pill.title = 'YouTube: Desconectado. Faça login com o Google.';
     }
+  }
+
+  // Status Kick
+  function renderKickStatus(statusObj) {
+    const pill = elements.kickStatusPill;
+    const btn = elements.btnKickConnect;
+    pill.className = `badge-status status-${statusObj.status}`;
+    const textSpan = pill.querySelector('.status-text');
+
+    if (statusObj.status === 'connected') {
+      textSpan.textContent = statusObj.channel ? `Kick: ${statusObj.channel}` : 'Kick: Live';
+      btn.textContent = 'Desconectar';
+      btn.classList.add('btn-disconnect');
+    } else if (statusObj.status === 'connecting') {
+      textSpan.textContent = 'Kick (...)';
+      btn.textContent = 'Conectando...';
+      btn.classList.remove('btn-disconnect');
+    } else if (statusObj.status === 'error') {
+      textSpan.textContent = 'Kick (Erro)';
+      btn.textContent = 'Reconectar';
+      btn.classList.remove('btn-disconnect');
+    } else {
+      textSpan.textContent = 'Kick';
+      btn.textContent = 'Conectar';
+      btn.classList.remove('btn-disconnect');
+    }
+
+    pill.title = statusObj.error ? `Kick: ${statusObj.error}` : `Kick: ${statusObj.status}`;
+  }
+
+  // Status TikTok Live
+  function renderTikTokStatus(statusObj) {
+    const pill = elements.tiktokStatusPill;
+    const btn = elements.btnTiktokConnect;
+    pill.className = `badge-status status-${statusObj.status}`;
+    const textSpan = pill.querySelector('.status-text');
+
+    if (statusObj.status === 'connected') {
+      textSpan.textContent = statusObj.channel ? `TikTok: @${statusObj.channel}` : 'TikTok: Live';
+      btn.textContent = 'Desconectar';
+      btn.classList.add('btn-disconnect');
+    } else if (statusObj.status === 'connecting') {
+      textSpan.textContent = 'TikTok (...)';
+      btn.textContent = 'Conectando...';
+      btn.classList.remove('btn-disconnect');
+    } else if (statusObj.status === 'error') {
+      textSpan.textContent = 'TikTok (Erro)';
+      btn.textContent = 'Reconectar';
+      btn.classList.remove('btn-disconnect');
+    } else {
+      textSpan.textContent = 'TikTok';
+      btn.textContent = 'Conectar';
+      btn.classList.remove('btn-disconnect');
+    }
+
+    pill.title = statusObj.error ? `TikTok: ${statusObj.error}` : `TikTok: ${statusObj.status}`;
   }
 
   // Renderiza uma mensagem no chat
@@ -250,7 +358,7 @@
       <div class="msg-body">
         <div class="msg-header">
           <span class="msg-time">${timeFormatted}</span>
-          <span class="platform-pill">${msg.platform}</span>
+          <span class="platform-pill">${escapeHtml(msg.platform)}</span>
           ${badgesHtml}
           <span class="msg-username" style="${userColorStyle}">${escapeHtml(msg.username)}:</span>
         </div>
@@ -260,7 +368,7 @@
 
     elements.messagesList.appendChild(item);
 
-    // Limita número de elementos no DOM para performance contínua no OBS
+    // Limita número de elementos no DOM para fluidez no OBS
     while (elements.messagesList.children.length > state.maxDomMessages) {
       elements.messagesList.removeChild(elements.messagesList.firstElementChild);
     }
@@ -275,9 +383,9 @@
     }
   }
 
-  // Funções de Rolagem e Auto-Scroll
+  // Rolagem e Auto-Scroll
   function isUserNearBottom() {
-    const threshold = 60;
+    const threshold = 70;
     const position = elements.chatContainer.scrollHeight - elements.chatContainer.scrollTop - elements.chatContainer.clientHeight;
     return position <= threshold;
   }
@@ -299,7 +407,7 @@
 
   // Event Listeners
   function setupEventListeners() {
-    // Escuta evento postMessage emitido pelo popup de OAuth do Google após o login
+    // Popup OAuth Google
     window.addEventListener('message', (event) => {
       if (event.data?.type === 'YOUTUBE_AUTH_SUCCESS') {
         console.log('[PlatChat] Login no Google concluído com sucesso!');
@@ -313,7 +421,7 @@
       elements.configDrawer.classList.toggle('open');
     });
 
-    // Conectar / Desconectar Twitch
+    // --- Twitch ---
     elements.btnTwitchConnect.addEventListener('click', () => {
       const channel = elements.twitchInput.value.trim();
       if (!channel) return;
@@ -330,7 +438,24 @@
       if (e.key === 'Enter') elements.btnTwitchConnect.click();
     });
 
-    // Botão de Login Google para o YouTube
+    // --- YouTube Direto ---
+    elements.btnYoutubeConnect.addEventListener('click', () => {
+      const channel = elements.youtubeInput.value.trim();
+      if (!channel) return;
+
+      if (state.youtubeStatus.status === 'connected') {
+        sendCommand({ action: 'unsubscribe', platform: 'youtube' });
+      } else {
+        localStorage.setItem('platchat_youtube_channel', channel);
+        sendCommand({ action: 'subscribe', platform: 'youtube', channel });
+      }
+    });
+
+    elements.youtubeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') elements.btnYoutubeConnect.click();
+    });
+
+    // --- YouTube OAuth Avançado ---
     elements.btnGoogleLogin.addEventListener('click', () => {
       const width = 560;
       const height = 680;
@@ -344,17 +469,49 @@
       );
     });
 
-    // Botão Buscar Live Ativa no YouTube
     elements.btnYoutubeDetect.addEventListener('click', () => {
       sendCommand({ action: 'detect_youtube_live' });
     });
 
-    // Botão Logout YouTube
     elements.btnYoutubeLogout.addEventListener('click', () => {
       sendCommand({ action: 'youtube_logout' });
     });
 
-    // Botões de Simulação para Teste
+    // --- Kick ---
+    elements.btnKickConnect.addEventListener('click', () => {
+      const channel = elements.kickInput.value.trim();
+      if (!channel) return;
+
+      if (state.kickStatus.status === 'connected') {
+        sendCommand({ action: 'unsubscribe', platform: 'kick' });
+      } else {
+        localStorage.setItem('platchat_kick_channel', channel);
+        sendCommand({ action: 'subscribe', platform: 'kick', channel });
+      }
+    });
+
+    elements.kickInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') elements.btnKickConnect.click();
+    });
+
+    // --- TikTok Live ---
+    elements.btnTiktokConnect.addEventListener('click', () => {
+      const channel = elements.tiktokInput.value.trim();
+      if (!channel) return;
+
+      if (state.tiktokStatus.status === 'connected') {
+        sendCommand({ action: 'unsubscribe', platform: 'tiktok' });
+      } else {
+        localStorage.setItem('platchat_tiktok_channel', channel);
+        sendCommand({ action: 'subscribe', platform: 'tiktok', channel });
+      }
+    });
+
+    elements.tiktokInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') elements.btnTiktokConnect.click();
+    });
+
+    // --- Botões de Simulação para Teste ---
     elements.btnTestTwitch.addEventListener('click', () => {
       sendCommand({ action: 'test_message', platform: 'twitch' });
     });
@@ -363,7 +520,15 @@
       sendCommand({ action: 'test_message', platform: 'youtube' });
     });
 
-    // Botão Limpar Chat
+    elements.btnTestKick.addEventListener('click', () => {
+      sendCommand({ action: 'test_message', platform: 'kick' });
+    });
+
+    elements.btnTestTiktok.addEventListener('click', () => {
+      sendCommand({ action: 'test_message', platform: 'tiktok' });
+    });
+
+    // Limpar Chat
     elements.btnClearChat.addEventListener('click', () => {
       elements.messagesList.innerHTML = '';
       state.unreadWhilePaused = 0;

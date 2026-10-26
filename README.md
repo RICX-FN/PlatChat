@@ -1,6 +1,6 @@
 # PlatChat - Chat Unificado para OBS Studio (Multistream Chat)
 
-MVP de Chat Unificado de alta performance desenvolvido para OBS Studio. O sistema consolida em tempo real as mensagens da **Twitch** e do **YouTube Live**, ordena-as cronologicamente e as transmite via **WebSocket** para um painel web embutível como Custom Browser Dock no OBS.
+Chat Unificado de alta performance desenvolvido para OBS Studio. O sistema consolida em tempo real as mensagens da **Twitch**, **YouTube Live**, **Kick** e **TikTok Live**, ordena-as cronologicamente e as transmite via **WebSocket** para um painel web embutível como Custom Browser Dock no OBS.
 
 ---
 
@@ -8,9 +8,11 @@ MVP de Chat Unificado de alta performance desenvolvido para OBS Studio. O sistem
 
 - **Backend**: Node.js com TypeScript (ESM), Express e `ws` (WebSockets).
 - **Frontend**: HTML5 semântico, CSS3 moderno (tema escuro otimizado para o OBS Studio) e Vanilla JavaScript modular (zero dependência de build no cliente).
-- **Autenticação**:
+- **Plataformas Suportadas**:
   - **Twitch**: Conexão IRC anônima (`justinfan`) sem necessidade de chaves de API ou login.
-  - **YouTube**: Fluxo profissional **OAuth 2.0 com Google Login** (idêntico ao OBS e Streamlabs), com renovação automática de tokens via Refresh Token e detecção automática da live ativa.
+  - **YouTube**: Leitura de chat em tempo real **sem necessidade de autenticação** (basta informar o `@handle`, ID do canal ou link da live), com suporte opcional a Google OAuth 2.0.
+  - **Kick**: Conexão WebSocket oficial via Pusher com negociação dinâmica de credenciais e leitura instantânea de histórico inicial.
+  - **TikTok Live**: Leitura de chat e presentes via Webcast Push em tempo real informando apenas o `@usuário`.
 - **Arquitetura**: Desacoplada e orientada a eventos (`EventEmitter`), com serviços isolados por plataforma e fila centralizadora com ordenação cronológica estrita.
 
 ---
@@ -25,11 +27,11 @@ PlatChat/
 ├── tsconfig.json                         # Configuração TypeScript NodeNext
 ├── README.md                             # Documentação e guia de integração
 ├── public/                               # Frontend do Custom Browser Dock do OBS
-│   ├── index.html                        # Interface com botão Google Login e status
+│   ├── index.html                        # Interface de chat e painel de configuração
 │   ├── css/
-│   │   └── style.css                     # Estilização OBS dark mode e badges
+│   │   └── style.css                     # Estilização OBS dark mode, badges e cores das 4 plataformas
 │   └── js/
-│       └── app.js                        # Lógica WebSocket, popup OAuth e auto-scroll
+│       └── app.js                        # Lógica WebSocket, formulários e auto-scroll
 └── src/                                  # Código-fonte do Backend (TypeScript)
     ├── types/
     │   └── chat.ts                       # Tipos unificados e status de transmissão
@@ -38,42 +40,19 @@ PlatChat/
     │   │   ├── twitchParser.ts           # Parser de tags IRC v3 da Twitch
     │   │   └── twitchIrcService.ts       # Conexão WebSocket IRC anônima
     │   ├── youtube/
-    │   │   ├── youtubeAuthService.ts     # Fluxo Google OAuth 2.0 e Refresh Token
-    │   │   └── youtubeLiveChatService.ts # Detecção de live ativa e polling com cota
+    │   │   ├── youtubePublicChatService.ts # Leitura de chat do YouTube SEM autenticação
+    │   │   ├── youtubeAuthService.ts     # Google OAuth 2.0 opcional
+    │   │   └── youtubeLiveChatService.ts # Polling oficial com cota
+    │   ├── kick/
+    │   │   └── kickChatService.ts        # Conexão WebSocket Pusher da Kick
+    │   ├── tiktok/
+    │   │   └── tiktokLiveService.ts      # Conexão Webcast Push do TikTok Live
     │   └── queue/
     │       └── messageQueue.ts           # Fila e ordenação cronológica estrita
     ├── websocket/
-    │   └── wsServer.ts                   # Servidor WebSocket e despacho de eventos
-    └── server.ts                         # Ponto de entrada Express, OAuth e WebSocket
+    │   └── wsServer.ts                   # Servidor WebSocket e despacho de eventos unificados
+    └── server.ts                         # Ponto de entrada Express, REST e WebSocket
 ```
-
----
-
-## ⚙️ Configuração do Google OAuth 2.0 (YouTube)
-
-Para permitir que o streamer faça login com o canal do YouTube:
-
-1. Acesse o [Google Cloud Console](https://console.cloud.google.com/).
-2. Crie ou selecione um projeto e acesse a **Biblioteca de APIs**.
-3. Procure por **YouTube Data API v3** e clique em **Ativar**.
-4. No menu lateral esquerdo, vá em **Tela de permissão OAuth** (OAuth consent screen):
-   - Tipo de usuário: **Externo** (External).
-   - Preencha o nome do app (ex: `PlatChat`) e seu e-mail.
-   - Em **Escopos**, adicione: `https://www.googleapis.com/auth/youtube.readonly`.
-   - Em **Usuários de teste**, adicione o e-mail da sua conta do Google/YouTube.
-5. Vá em **Credenciais** -> **Criar Credenciais** -> **ID do cliente OAuth**:
-   - Tipo de aplicativo: **Aplicativo da Web (Web application)**.
-   - Nome: `PlatChat OBS Client`.
-   - **URIs de redirecionamento autorizados**:
-     ```
-     http://localhost:3000/auth/google/callback
-     ```
-6. Copie o **Client ID** e o **Client Secret** gerados e cole no seu arquivo `.env`:
-   ```env
-   GOOGLE_CLIENT_ID=seu_client_id.apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=seu_client_secret
-   GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-   ```
 
 ---
 
@@ -104,5 +83,7 @@ npm start
    ```
 5. Clique em **Aplicar**. O painel abrirá dentro do OBS Studio.
 6. Clique no botão de engrenagem no topo para abrir as configurações:
-   - Digite seu canal da Twitch e clique em **Conectar**.
-   - Clique em **Conectar YouTube (Google Login)** para autorizar seu canal. O chat da sua live será detectado automaticamente!
+   - **Twitch**: Digite o canal (ex: `gaules`) e clique em **Conectar**.
+   - **YouTube**: Digite o `@canal`, ID ou link da live (ex: `@LofiGirl`) e clique em **Conectar** (sem login!).
+   - **Kick**: Digite o canal (ex: `xqc`) e clique em **Conectar**.
+   - **TikTok Live**: Digite o nome de usuário (ex: `@streamer`) e clique em **Conectar**.
