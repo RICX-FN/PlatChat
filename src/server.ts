@@ -78,7 +78,9 @@ const createLicenseToken = (subscription: Stripe.Subscription, status = subscrip
   );
   const expiration = status === 'canceled'
     ? now + 60
-    : currentPeriodEnd || subscription.trial_end || now + 60;
+    : status === 'trialing'
+      ? subscription.trial_end || currentPeriodEnd || now + 60
+      : currentPeriodEnd || subscription.trial_end || now + 60;
   const trialStart = subscription.trial_start;
   const trialEnd = subscription.trial_end;
   const payload = {
@@ -223,11 +225,20 @@ app.get('/api/stripe/verify-license', async (req, res) => {
     }
     if (!token) return res.status(401).json({ valid: false, error: 'License token is required' });
 
-    const claims = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] }) as JwtPayload;
-    if (!['trialing', 'active'].includes(String(claims.license_status))) {
+    const claims = jwt.verify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
+      ignoreExpiration: true
+    }) as JwtPayload;
+    if (typeof claims.subscription_id !== 'string') {
+      return res.status(401).json({ valid: false, error: 'License does not contain a subscription' });
+    }
+    const subscription = await getStripe().subscriptions.retrieve(claims.subscription_id);
+    if (!['trialing', 'active'].includes(subscription.status)) {
       return res.status(403).json({ valid: false, error: 'License is not active' });
     }
-    return res.json({ valid: true, license: claims, token });
+    const refreshedToken = createLicenseToken(subscription);
+    const refreshedClaims = jwt.verify(refreshedToken, getJwtSecret(), { algorithms: ['HS256'] }) as JwtPayload;
+    return res.json({ valid: true, license: refreshedClaims, token: refreshedToken });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
       return res.status(401).json({ valid: false, error: 'License token is invalid or expired' });
@@ -235,6 +246,43 @@ app.get('/api/stripe/verify-license', async (req, res) => {
     const message = error instanceof Error ? error.message : 'Could not verify license';
     console.error(`[Stripe] License verification failed: ${message}`);
     return res.status(503).json({ valid: false, error: 'License verification is temporarily unavailable' });
+  }
+});
+
+app.post('/api/stripe/customer-portal', async (req, res) => {
+  try {
+    const token = req.header('authorization')?.replace(/^Bearer\s+/i, '');
+    if (!token) return res.status(401).json({ error: 'License token is required' });
+
+    const claims = jwt.verify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
+      ignoreExpiration: true
+    }) as JwtPayload;
+    if (typeof claims.subscription_id !== 'string') {
+      return res.status(401).json({ error: 'License does not contain a subscription' });
+    }
+    const subscription = await getStripe().subscriptions.retrieve(claims.subscription_id);
+    if (!['trialing', 'active'].includes(subscription.status)) {
+      return res.status(403).json({ error: 'License is not active' });
+    }
+    const customerId = typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer.id;
+
+    const clientUrl = process.env.CLIENT_URL;
+    if (!clientUrl) throw new Error('CLIENT_URL is not configured');
+    const portal = await getStripe().billingPortal.sessions.create({
+      customer: customerId,
+      return_url: clientUrl
+    });
+    return res.json({ url: portal.url });
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError || error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ error: 'License token is invalid or expired' });
+    }
+    const message = error instanceof Error ? error.message : 'Could not open customer portal';
+    console.error(`[Stripe] Customer portal creation failed: ${message}`);
+    return res.status(503).json({ error: 'Customer portal is temporarily unavailable' });
   }
 });
 

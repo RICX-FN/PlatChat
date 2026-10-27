@@ -32,6 +32,11 @@
           <p>Traga Twitch, YouTube, Kick e TikTok para um único chat, pronto para acompanhar sua live direto no OBS Studio.</p>
           <div class="hero-actions">
             <button id="btn-subscribe" class="btn-primary" type="button">Assinar plano mensal <span aria-hidden="true">→</span></button>
+            <span id="premium-status" class="premium-status hidden" role="status">
+              <span class="premium-badge"><span aria-hidden="true">✦</span> Plano ativo · Premium Active</span>
+              <span id="premium-expiration" class="premium-expiration"></span>
+              <button id="btn-customer-portal" class="btn-secondary" type="button">Gerenciar assinatura</button>
+            </span>
             <a class="btn-secondary" href="#obs-guide">Como funciona <span aria-hidden="true">↓</span></a>
           </div>
           <p class="pricing-note"><strong>7 dias de teste</strong> · depois <span id="subscription-price">preço mostrado no checkout</span> por mês · assinatura e cobrança pelo Stripe</p>
@@ -55,6 +60,11 @@
         <div class="trial-icon">✦</div>
         <div class="trial-copy"><span class="eyebrow">ASSINATURA DO PLANO MENSAL</span><h2>Ative seu plano PlatChat.</h2><p>Cadastre o pagamento no Stripe. Você tem 7 dias de teste; depois, a assinatura mensal é cobrada automaticamente.</p></div>
         <button id="btn-subscribe-banner" class="btn-primary" type="button">Assinar plano mensal <span aria-hidden="true">→</span></button>
+      </section>
+      <section id="premium-banner" class="premium-banner glass-card hidden" aria-label="Plano ativo">
+        <div class="trial-icon">✦</div>
+        <div class="trial-copy"><span class="eyebrow">ASSINATURA CONFIRMADA</span><h2>Seu PlatChat Premium está ativo.</h2><p id="premium-banner-expiration"></p></div>
+        <button id="btn-customer-portal-banner" class="btn-secondary" type="button">Gerenciar assinatura <span aria-hidden="true">↗</span></button>
       </section>
 
       <section class="workspace-section" id="chat">

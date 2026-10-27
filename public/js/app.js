@@ -7,6 +7,7 @@
     unreadWhilePaused: 0,
     initialStatusesReceived: false,
     pendingPlatform: null,
+    licenseToken: null,
     twitchStatus: { status: 'disconnected', channel: null },
     youtubeStatus: { status: 'disconnected', channel: null, hasActiveLive: false },
     kickStatus: { status: 'disconnected', channel: null },
@@ -118,11 +119,73 @@
     }
   }
 
+  function updateSubscriptionUI(license) {
+    const active = Boolean(license && ['trialing', 'active'].includes(license.license_status));
+    const subscribeButton = document.getElementById('btn-subscribe');
+    const subscribeBannerButton = document.getElementById('btn-subscribe-banner');
+    const premiumStatus = document.getElementById('premium-status');
+    const trialBanner = document.querySelector('.trial-banner');
+    const premiumBanner = document.getElementById('premium-banner');
+    const pricingNote = document.querySelector('.pricing-note');
+
+    subscribeButton.classList.toggle('hidden', active);
+    subscribeBannerButton.classList.toggle('hidden', active);
+    premiumStatus.classList.toggle('hidden', !active);
+    trialBanner.classList.toggle('hidden', active);
+    premiumBanner.classList.toggle('hidden', !active);
+    pricingNote.classList.toggle('hidden', active);
+
+    if (!active) return;
+
+    const expiration = new Date(license.expira_em);
+    const dateText = Number.isNaN(expiration.getTime())
+      ? 'Data de renovação não disponível'
+      : `${license.trial?.active ? 'Teste grátis até' : 'Acesso até'} ${expiration.toLocaleDateString('pt-BR', { dateStyle: 'long' })}`;
+    document.getElementById('premium-expiration').textContent = dateText;
+    document.getElementById('premium-banner-expiration').textContent = dateText;
+  }
+
+  async function openCustomerPortal() {
+    const buttons = [
+      document.getElementById('btn-customer-portal'),
+      document.getElementById('btn-customer-portal-banner')
+    ];
+    buttons.forEach((button) => { button.disabled = true; });
+
+    try {
+      const response = await fetch('/api/stripe/customer-portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${state.licenseToken}` }
+      });
+      const result = await response.json();
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || 'Não foi possível abrir o portal da assinatura.');
+      }
+      const portalUrl = new URL(result.url);
+      if (portalUrl.protocol !== 'https:') throw new Error('O Stripe retornou um endereço de portal inválido.');
+      window.location.assign(portalUrl.href);
+    } catch (error) {
+      console.error('[PlatChat] Falha ao abrir portal de assinatura:', error);
+      alert(error.message || 'Não foi possível abrir o portal da assinatura. Tente novamente.');
+      buttons.forEach((button) => { button.disabled = false; });
+    }
+  }
+
   async function handleCheckoutReturn() {
-    const sessionId = new URLSearchParams(window.location.search).get('session_id')
-      || localStorage.getItem('platchat_checkout_session_id');
-    const savedToken = localStorage.getItem('platchat_license_token');
-    if (!sessionId && !savedToken) return;
+    const currentUrl = new URL(window.location.href);
+    const sessionId = currentUrl.searchParams.get('session_id');
+    if (sessionId) {
+      currentUrl.searchParams.delete('session_id');
+      window.history.replaceState({}, '', currentUrl);
+    }
+
+    const savedToken = localStorage.getItem('platchat_token')
+      || localStorage.getItem('platchat_license_token');
+    const token = savedToken;
+    if (!sessionId && !token) {
+      updateSubscriptionUI(null);
+      return;
+    }
 
     try {
       let response;
@@ -131,25 +194,30 @@
           ? `/api/stripe/verify-license?session_id=${encodeURIComponent(sessionId)}`
           : '/api/stripe/verify-license';
         response = await fetch(url, {
-          headers: sessionId ? {} : { Authorization: `Bearer ${savedToken}` }
+          headers: token && !sessionId ? { Authorization: `Bearer ${token}` } : {}
         });
         if (response.ok || response.status !== 401 || attempt === 4) break;
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Não foi possível validar a licença.');
-      localStorage.setItem('platchat_license_token', result.token);
-      if (sessionId) {
-        localStorage.setItem('platchat_checkout_session_id', sessionId);
-        const url = new URL(window.location.href);
-        url.searchParams.delete('session_id');
-        window.history.replaceState({}, '', url);
+      if (!response.ok || !result.valid || !result.token) {
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('platchat_token');
+          localStorage.removeItem('platchat_license_token');
+          state.licenseToken = null;
+          updateSubscriptionUI(null);
+          return;
+        }
+        throw new Error(result.error || 'Não foi possível validar a licença.');
       }
+      state.licenseToken = result.token;
+      localStorage.setItem('platchat_token', result.token);
+      localStorage.removeItem('platchat_license_token');
+      updateSubscriptionUI(result.license);
     } catch (error) {
       console.error('[PlatChat] Falha ao verificar licença:', error);
       if (sessionId) alert('Pagamento recebido, mas a licença ainda está sendo preparada. Atualize esta página em instantes.');
-      else localStorage.removeItem('platchat_license_token');
     }
   }
 
@@ -478,6 +546,8 @@
   function setupEventListeners() {
     document.getElementById('btn-subscribe').addEventListener('click', startCheckout);
     document.getElementById('btn-subscribe-banner').addEventListener('click', startCheckout);
+    document.getElementById('btn-customer-portal').addEventListener('click', openCustomerPortal);
+    document.getElementById('btn-customer-portal-banner').addEventListener('click', openCustomerPortal);
 
     elements.btnToggleCompact.addEventListener('click', () => {
       setCompactMode(!document.body.classList.contains('dock-mode'));
