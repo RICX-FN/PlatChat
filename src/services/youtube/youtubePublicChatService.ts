@@ -24,7 +24,6 @@ export class YouTubePublicChatService extends EventEmitter {
       channel: this.currentIdentifier || undefined,
       liveTitle: this.currentLiveId ? `Live ID: ${this.currentLiveId}` : undefined,
       hasActiveLive: this.status === 'connected',
-      isAuthenticated: false, // Público, sem necessidade de autenticação
       error: this.lastErrorMessage || undefined
     };
   }
@@ -36,7 +35,7 @@ export class YouTubePublicChatService extends EventEmitter {
   }
 
   /**
-   * Conecta ao chat do YouTube sem precisar de autenticação OAuth ou chaves de API.
+   * Conecta ao chat público do YouTube sem login ou chaves de API.
    * Suporta:
    * - Handle: @LofiGirl ou LofiGirl
    * - Channel ID: UC...

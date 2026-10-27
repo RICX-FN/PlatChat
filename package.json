@@ -22,12 +22,15 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
+    "stripe": "^23.0.1",
     "tiktok-live-connector": "^2.5.0",
     "ws": "^8.18.0",
     "youtube-chat": "^2.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.13.9",
     "@types/ws": "^8.5.14",
     "tsx": "^4.19.3",

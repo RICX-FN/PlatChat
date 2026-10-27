@@ -10,7 +10,7 @@ Chat Unificado de alta performance desenvolvido para OBS Studio. O sistema conso
 - **Frontend**: HTML5 semântico, CSS3 moderno (tema escuro otimizado para o OBS Studio) e Vanilla JavaScript modular (zero dependência de build no cliente).
 - **Plataformas Suportadas**:
   - **Twitch**: Conexão IRC anônima (`justinfan`) sem necessidade de chaves de API ou login.
-  - **YouTube**: Leitura de chat em tempo real **sem necessidade de autenticação** (basta informar o `@handle`, ID do canal ou link da live), com suporte opcional a Google OAuth 2.0.
+  - **YouTube**: Leitura de chat em tempo real sem necessidade de conta ou login (basta informar o `@handle`, ID do canal ou link da live).
   - **Kick**: Conexão WebSocket oficial via Pusher com negociação dinâmica de credenciais e leitura instantânea de histórico inicial.
   - **TikTok Live**: Leitura de chat e presentes via Webcast Push em tempo real informando apenas o `@usuário`.
 - **Arquitetura**: Desacoplada e orientada a eventos (`EventEmitter`), com serviços isolados por plataforma e fila centralizadora com ordenação cronológica estrita.
@@ -41,8 +41,6 @@ PlatChat/
     │   │   └── twitchIrcService.ts       # Conexão WebSocket IRC anônima
     │   ├── youtube/
     │   │   ├── youtubePublicChatService.ts # Leitura de chat do YouTube SEM autenticação
-    │   │   ├── youtubeAuthService.ts     # Google OAuth 2.0 opcional
-    │   │   └── youtubeLiveChatService.ts # Polling oficial com cota
     │   ├── kick/
     │   │   └── kickChatService.ts        # Conexão WebSocket Pusher da Kick
     │   ├── tiktok/
@@ -57,6 +55,15 @@ PlatChat/
 ---
 
 ## 🚀 Como Executar
+
+Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`,
+`JWT_SECRET` (com pelo menos 32 caracteres aleatórios) e `CLIENT_URL` no ambiente.
+O endpoint do webhook do Stripe é `/api/stripe/webhook`; configure-o para os eventos
+`checkout.session.completed`, `customer.subscription.updated` e
+`customer.subscription.deleted`. O checkout oferece sete dias de teste, e o preço
+recorrente configurado é exibido no painel antes do checkout. O PlatChat não mantém
+uma base de dados: tokens de licença assinados e o estado da assinatura são
+armazenados nos metadados do Stripe.
 
 ### 1. Iniciar em desenvolvimento
 ```bash
@@ -79,7 +86,7 @@ npm start
 3. Em **Nome do Painel (Dock Name)**, informe: `Chat Unificado` ou `PlatChat`.
 4. Em **URL**, insira:
    ```
-   http://localhost:3000
+   http://localhost:3000/?dock=1
    ```
 5. Clique em **Aplicar**. O painel abrirá dentro do OBS Studio.
 6. Clique no botão de engrenagem no topo para abrir as configurações:
@@ -87,3 +94,4 @@ npm start
    - **YouTube**: Digite o `@canal`, ID ou link da live (ex: `@LofiGirl`) e clique em **Conectar** (sem login!).
    - **Kick**: Digite o canal (ex: `xqc`) e clique em **Conectar**.
    - **TikTok Live**: Digite o nome de usuário (ex: `@streamer`) e clique em **Conectar**.
+   Após conectar um canal, o PlatChat recolhe automaticamente a apresentação e maximiza o chat. O botão ⤢/⤡ alterna entre o modo compacto e a página completa; `?dock=1` abre sempre diretamente no modo compacto. O histórico visual é limitado às últimas 150 mensagens para manter o painel leve.

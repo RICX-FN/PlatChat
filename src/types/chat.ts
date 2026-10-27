@@ -27,7 +27,6 @@ export interface PlatformStatus {
   channel?: string;
   channelAvatar?: string;
   liveTitle?: string;
-  isAuthenticated?: boolean;
   hasActiveLive?: boolean;
   error?: string;
 }
@@ -45,9 +44,7 @@ export interface ClientCommand {
     | 'unsubscribe' 
     | 'get_history' 
     | 'get_status' 
-    | 'test_message'
-    | 'detect_youtube_live'
-    | 'youtube_logout';
+    | 'test_message';
   platform?: Platform;
   channel?: string;
   message?: string;

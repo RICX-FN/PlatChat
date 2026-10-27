@@ -5,11 +5,13 @@
     isConnectedWs: false,
     autoScroll: true,
     unreadWhilePaused: 0,
+    initialStatusesReceived: false,
+    pendingPlatform: null,
     twitchStatus: { status: 'disconnected', channel: null },
-    youtubeStatus: { status: 'disconnected', channel: null, isAuthenticated: false, hasActiveLive: false },
+    youtubeStatus: { status: 'disconnected', channel: null, hasActiveLive: false },
     kickStatus: { status: 'disconnected', channel: null },
     tiktokStatus: { status: 'disconnected', channel: null },
-    maxDomMessages: 250
+    maxDomMessages: 150
   };
 
   // Elementos do DOM
@@ -20,6 +22,7 @@
     kickStatusPill: document.getElementById('kick-status-pill'),
     tiktokStatusPill: document.getElementById('tiktok-status-pill'),
     btnToggleConfig: document.getElementById('btn-toggle-config'),
+    btnToggleCompact: document.getElementById('btn-toggle-compact'),
     configDrawer: document.getElementById('config-drawer'),
 
     // Formulário Twitch
@@ -29,16 +32,6 @@
     // Formulário YouTube Direto (sem autenticação)
     youtubeInput: document.getElementById('youtube-channel-input'),
     btnYoutubeConnect: document.getElementById('btn-youtube-connect'),
-
-    // YouTube OAuth (Avançado)
-    ytUnauthBox: document.getElementById('yt-unauth-box'),
-    ytAuthBox: document.getElementById('yt-auth-box'),
-    btnGoogleLogin: document.getElementById('btn-google-login'),
-    ytChannelAvatar: document.getElementById('yt-channel-avatar'),
-    ytChannelTitle: document.getElementById('yt-channel-title'),
-    ytLiveStatusPill: document.getElementById('yt-live-status-pill'),
-    btnYoutubeDetect: document.getElementById('btn-youtube-detect'),
-    btnYoutubeLogout: document.getElementById('btn-youtube-logout'),
 
     // Formulário Kick
     kickInput: document.getElementById('kick-channel-input'),
@@ -71,6 +64,93 @@
     loadSavedSettings();
     setupEventListeners();
     connectWebSocket();
+    loadSubscriptionPrice();
+    handleCheckoutReturn();
+    const dockMode = new URLSearchParams(window.location.search).get('dock') === '1'
+      || localStorage.getItem('platchat_dock_mode') === 'true';
+    setCompactMode(dockMode, false);
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+  }
+
+  function setCompactMode(enabled, persist = true) {
+    document.body.classList.toggle('dock-mode', enabled);
+    elements.btnToggleCompact.setAttribute('aria-pressed', String(enabled));
+    elements.btnToggleCompact.setAttribute('aria-label', enabled ? 'Mostrar página completa' : 'Ativar modo compacto');
+    elements.btnToggleCompact.title = enabled ? 'Mostrar página completa' : 'Ativar modo compacto';
+    elements.btnToggleCompact.textContent = enabled ? '⤡' : '⤢';
+    if (persist) localStorage.setItem('platchat_dock_mode', String(enabled));
+  }
+
+  async function loadSubscriptionPrice() {
+    try {
+      const response = await fetch('/api/stripe/price');
+      if (!response.ok) return;
+      const price = await response.json();
+      const formatter = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: price.currency.toUpperCase()
+      });
+      const amount = formatter.format(price.amount / (10 ** formatter.resolvedOptions().maximumFractionDigits));
+      const intervals = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' };
+      const interval = intervals[price.interval] || price.interval;
+      const pluralInterval = interval === 'mês' ? 'meses' : `${interval}s`;
+      const cadence = price.interval_count > 1 ? `a cada ${price.interval_count} ${pluralInterval}` : `/${interval}`;
+      document.getElementById('subscription-price').textContent = `${amount}${cadence}`;
+    } catch (error) {
+      console.error('[PlatChat] Não foi possível carregar o preço da assinatura:', error);
+    }
+  }
+
+  async function startCheckout() {
+    const buttons = [document.getElementById('btn-subscribe'), document.getElementById('btn-subscribe-banner')];
+    buttons.forEach((button) => { button.disabled = true; });
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', { method: 'POST' });
+      const result = await response.json();
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || 'Não foi possível abrir o checkout do plano mensal.');
+      }
+      window.location.assign(result.url);
+    } catch (error) {
+      console.error('[PlatChat] Falha ao iniciar checkout:', error);
+      alert(error.message || 'Não foi possível iniciar o checkout. Tente novamente.');
+      buttons.forEach((button) => { button.disabled = false; });
+    }
+  }
+
+  async function handleCheckoutReturn() {
+    const sessionId = new URLSearchParams(window.location.search).get('session_id')
+      || localStorage.getItem('platchat_checkout_session_id');
+    const savedToken = localStorage.getItem('platchat_license_token');
+    if (!sessionId && !savedToken) return;
+
+    try {
+      let response;
+      for (let attempt = 0; attempt < (sessionId ? 5 : 1); attempt++) {
+        const url = sessionId
+          ? `/api/stripe/verify-license?session_id=${encodeURIComponent(sessionId)}`
+          : '/api/stripe/verify-license';
+        response = await fetch(url, {
+          headers: sessionId ? {} : { Authorization: `Bearer ${savedToken}` }
+        });
+        if (response.ok || response.status !== 401 || attempt === 4) break;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Não foi possível validar a licença.');
+      localStorage.setItem('platchat_license_token', result.token);
+      if (sessionId) {
+        localStorage.setItem('platchat_checkout_session_id', sessionId);
+        const url = new URL(window.location.href);
+        url.searchParams.delete('session_id');
+        window.history.replaceState({}, '', url);
+      }
+    } catch (error) {
+      console.error('[PlatChat] Falha ao verificar licença:', error);
+      if (sessionId) alert('Pagamento recebido, mas a licença ainda está sendo preparada. Atualize esta página em instantes.');
+      else localStorage.removeItem('platchat_license_token');
+    }
   }
 
   // Carrega preferências salvas no localStorage
@@ -185,6 +265,20 @@
       state.tiktokStatus = statuses.tiktok;
       renderTikTokStatus(statuses.tiktok);
     }
+
+    const hasConnectedPlatform = [statuses.twitch, statuses.youtube, statuses.kick, statuses.tiktok]
+      .some((status) => status?.status === 'connected');
+    const pendingStatus = state.pendingPlatform ? statuses[state.pendingPlatform] : null;
+
+    if ((!state.initialStatusesReceived && hasConnectedPlatform)
+      || pendingStatus?.status === 'connected') {
+      setCompactMode(true);
+      elements.configDrawer.classList.remove('open');
+    }
+    if (pendingStatus?.status === 'connected' || pendingStatus?.status === 'error') {
+      state.pendingPlatform = null;
+    }
+    state.initialStatusesReceived = true;
   }
 
   // Status Twitch
@@ -215,7 +309,7 @@
     pill.title = statusObj.error ? `Twitch: ${statusObj.error}` : `Twitch: ${statusObj.status}`;
   }
 
-  // Status YouTube (Direto + OAuth)
+  // Status YouTube público
   function renderYouTubeStatus(statusObj) {
     const pill = elements.youtubeStatusPill;
     const btnDirect = elements.btnYoutubeConnect;
@@ -244,31 +338,6 @@
 
     pill.title = statusObj.error ? `YouTube: ${statusObj.error}` : `YouTube: ${statusObj.status}`;
 
-    // Atualiza painel avançado OAuth se estiver logado
-    if (statusObj.isAuthenticated) {
-      elements.ytUnauthBox.classList.add('hidden');
-      elements.ytAuthBox.classList.remove('hidden');
-
-      elements.ytChannelTitle.textContent = statusObj.channel || 'Canal Autenticado';
-
-      if (statusObj.channelAvatar) {
-        elements.ytChannelAvatar.src = statusObj.channelAvatar;
-        elements.ytChannelAvatar.style.display = 'block';
-      } else {
-        elements.ytChannelAvatar.style.display = 'none';
-      }
-
-      if (statusObj.hasActiveLive) {
-        elements.ytLiveStatusPill.className = 'yt-live-tag tag-live';
-        elements.ytLiveStatusPill.textContent = `● Live: ${statusObj.liveTitle || 'Ao Vivo'}`;
-      } else {
-        elements.ytLiveStatusPill.className = 'yt-live-tag tag-offline';
-        elements.ytLiveStatusPill.textContent = '○ Nenhuma live ativa';
-      }
-    } else {
-      elements.ytUnauthBox.classList.remove('hidden');
-      elements.ytAuthBox.classList.add('hidden');
-    }
   }
 
   // Status Kick
@@ -407,13 +476,11 @@
 
   // Event Listeners
   function setupEventListeners() {
-    // Popup OAuth Google
-    window.addEventListener('message', (event) => {
-      if (event.data?.type === 'YOUTUBE_AUTH_SUCCESS') {
-        console.log('[PlatChat] Login no Google concluído com sucesso!');
-        sendCommand({ action: 'get_status' });
-        sendCommand({ action: 'detect_youtube_live' });
-      }
+    document.getElementById('btn-subscribe').addEventListener('click', startCheckout);
+    document.getElementById('btn-subscribe-banner').addEventListener('click', startCheckout);
+
+    elements.btnToggleCompact.addEventListener('click', () => {
+      setCompactMode(!document.body.classList.contains('dock-mode'));
     });
 
     // Toggle Painel de Configurações
@@ -430,6 +497,7 @@
         sendCommand({ action: 'unsubscribe', platform: 'twitch' });
       } else {
         localStorage.setItem('platchat_twitch_channel', channel);
+        state.pendingPlatform = 'twitch';
         sendCommand({ action: 'subscribe', platform: 'twitch', channel });
       }
     });
@@ -447,34 +515,13 @@
         sendCommand({ action: 'unsubscribe', platform: 'youtube' });
       } else {
         localStorage.setItem('platchat_youtube_channel', channel);
+        state.pendingPlatform = 'youtube';
         sendCommand({ action: 'subscribe', platform: 'youtube', channel });
       }
     });
 
     elements.youtubeInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') elements.btnYoutubeConnect.click();
-    });
-
-    // --- YouTube OAuth Avançado ---
-    elements.btnGoogleLogin.addEventListener('click', () => {
-      const width = 560;
-      const height = 680;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      window.open(
-        '/auth/google',
-        'google_oauth_popup',
-        `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
-      );
-    });
-
-    elements.btnYoutubeDetect.addEventListener('click', () => {
-      sendCommand({ action: 'detect_youtube_live' });
-    });
-
-    elements.btnYoutubeLogout.addEventListener('click', () => {
-      sendCommand({ action: 'youtube_logout' });
     });
 
     // --- Kick ---
@@ -486,6 +533,7 @@
         sendCommand({ action: 'unsubscribe', platform: 'kick' });
       } else {
         localStorage.setItem('platchat_kick_channel', channel);
+        state.pendingPlatform = 'kick';
         sendCommand({ action: 'subscribe', platform: 'kick', channel });
       }
     });
@@ -503,6 +551,7 @@
         sendCommand({ action: 'unsubscribe', platform: 'tiktok' });
       } else {
         localStorage.setItem('platchat_tiktok_channel', channel);
+        state.pendingPlatform = 'tiktok';
         sendCommand({ action: 'subscribe', platform: 'tiktok', channel });
       }
     });

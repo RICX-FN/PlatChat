@@ -3,181 +3,115 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="google-site-verification" content="ExhClhldXe_nPMUy4cYlwNvuEWnmL0z4sSzKiSpVOEU" />
-  <title>PlatChat - Unified Multistream OBS Dock</title>
+  <meta name="description" content="Reúna os chats das suas lives em um único dock no OBS Studio. Comece seu teste grátis de 7 dias.">
+  <title>PlatChat — Seu chat, em todo lugar</title>
   <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="app" class="app-container">
-    <!-- Barra Superior / Header do OBS Dock -->
-    <header class="dock-header">
-      <div class="dock-header-top">
-        <div class="brand">
-          <span class="brand-title">PlatChat</span>
-          <span class="status-indicator-container">
-            <!-- Twitch Pill -->
-            <span id="twitch-status-pill" class="badge-status status-disconnected" title="Twitch: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
-              <span class="status-text">Twitch</span>
-            </span>
-
-            <!-- YouTube Pill -->
-            <span id="youtube-status-pill" class="badge-status status-disconnected" title="YouTube: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-              <span class="status-text">YouTube</span>
-            </span>
-
-            <!-- Kick Pill -->
-            <span id="kick-status-pill" class="badge-status status-disconnected" title="Kick: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M3 2h6v6h2.5L16 2h5l-6 7.5L21.5 22h-5L11.5 14H9v8H3V2z"/></svg>
-              <span class="status-text">Kick</span>
-            </span>
-
-            <!-- TikTok Pill -->
-            <span id="tiktok-status-pill" class="badge-status status-disconnected" title="TikTok: Desconectado">
-              <svg class="icon" viewBox="0 0 24 24" width="11" height="11"><path fill="currentColor" d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743 2.9 2.9 0 0 1 2.31-4.64c.298 0 .584.045.855.128V9.372a6.332 6.332 0 0 0-.855-.058C6.01 9.314 3 12.33 3 16.05c0 3.722 3.01 6.738 6.723 6.738 3.57 0 6.49-2.793 6.708-6.312V9.01a8.18 8.18 0 0 0 4.887 1.579v-3.49a4.84 4.84 0 0 1-1.729-.413z"/></svg>
-              <span class="status-text">TikTok</span>
-            </span>
-          </span>
-        </div>
-
-        <div class="header-actions">
-          <button id="btn-toggle-config" class="btn-icon" title="Configurar Canais e Conexões" aria-label="Configurações">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-          </button>
-        </div>
+    <nav class="site-nav">
+      <a class="brand brand-link" href="/" aria-label="PlatChat início">
+        <span class="brand-mark">P</span>
+        <span class="brand-title">PlatChat</span>
+      </a>
+      <div class="nav-platforms" aria-label="Plataformas disponíveis">
+        <span>Twitch</span><span>YouTube</span><span>Kick</span><span>TikTok</span>
       </div>
+      <a class="nav-cta" href="#chat">Abrir meu chat <span aria-hidden="true">↗</span></a>
+    </nav>
 
-      <!-- Painel Colapsável de Configurações -->
-      <div id="config-drawer" class="config-drawer">
-        <div class="config-grid">
-          <!-- Config Twitch -->
-          <div class="config-group">
-            <div class="config-title">
-              <span class="dot-platform twitch-dot"></span>
-              <strong>Twitch</strong>
-            </div>
-            <div class="input-row">
-              <input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false">
-              <button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button>
-            </div>
+    <main>
+      <section class="hero-section">
+        <div class="hero-copy">
+          <span class="eyebrow"><span class="live-dot"></span> UM CHAT. TODAS AS SUAS LIVES.</span>
+          <h1>Mais conversa.<br><span>Menos abas abertas.</span></h1>
+          <p>Traga Twitch, YouTube, Kick e TikTok para um único chat, pronto para acompanhar sua live direto no OBS Studio.</p>
+          <div class="hero-actions">
+            <button id="btn-subscribe" class="btn-primary" type="button">Assinar plano mensal <span aria-hidden="true">→</span></button>
+            <a class="btn-secondary" href="#obs-guide">Como funciona <span aria-hidden="true">↓</span></a>
           </div>
+          <p class="pricing-note"><strong>7 dias de teste</strong> · depois <span id="subscription-price">preço mostrado no checkout</span> por mês · assinatura e cobrança pelo Stripe</p>
+          <div class="trust-row"><span>✓ Sem login para conectar YouTube</span><span>✓ Sem banco de dados de usuários</span></div>
+        </div>
+        <div class="hero-visual" aria-label="Prévia do chat unificado">
+          <div class="glow-orb"></div>
+          <div class="preview-card glass-card">
+            <div class="preview-top"><span class="preview-live"><i></i> AO VIVO</span><span>CHAT UNIFICADO</span><span class="preview-dots">•••</span></div>
+            <div class="preview-platforms"><b class="twitch-chip">● Twitch</b><b class="youtube-chip">● YouTube</b><b class="kick-chip">● Kick</b></div>
+            <div class="preview-message"><span class="preview-avatar avatar-purple">G</span><div><small><b>gaules</b> <em>Twitch</em></small><p>Salve chat, bora começar! 🔥</p></div></div>
+            <div class="preview-message"><span class="preview-avatar avatar-red">L</span><div><small><b>liveviewer</b> <em>YouTube</em></small><p>Assistindo de Portugal 🇵🇹</p></div></div>
+            <div class="preview-message"><span class="preview-avatar avatar-green">M</span><div><small><b>modstream</b> <em>Kick</em></small><p>Boa live pra todo mundo!</p></div></div>
+            <div class="preview-input">As mensagens da sua comunidade, juntas <span>↗</span></div>
+          </div>
+          <div class="floating-badge">✦ Feito para streamers</div>
+        </div>
+      </section>
 
-          <!-- Config YouTube (Direto / Sem Autenticação) -->
-          <div class="config-group">
-            <div class="config-title">
-              <span class="dot-platform youtube-dot"></span>
-              <strong>YouTube</strong> (Chat Direto sem Login)
-            </div>
-            <div class="input-row">
-              <input type="text" id="youtube-channel-input" placeholder="ex: @LofiGirl, ID do canal ou link da live" autocomplete="off" spellcheck="false">
-              <button id="btn-youtube-connect" class="btn btn-youtube">Conectar</button>
-            </div>
-            <div class="hint-text">Cole o @handle do canal, ID ou link da live. Sem necessidade de login no Google!</div>
+      <section class="trial-banner glass-card" aria-label="Assinatura mensal PlatChat">
+        <div class="trial-icon">✦</div>
+        <div class="trial-copy"><span class="eyebrow">ASSINATURA DO PLANO MENSAL</span><h2>Ative seu plano PlatChat.</h2><p>Cadastre o pagamento no Stripe. Você tem 7 dias de teste; depois, a assinatura mensal é cobrada automaticamente.</p></div>
+        <button id="btn-subscribe-banner" class="btn-primary" type="button">Assinar plano mensal <span aria-hidden="true">→</span></button>
+      </section>
 
-            <!-- Opção Secundária Google OAuth (Avançado) -->
-            <details class="yt-advanced-details">
-              <summary class="yt-advanced-summary">Ou conectar via Google OAuth (Avançado)</summary>
-              <div id="yt-unauth-box" class="yt-auth-box">
-                <button id="btn-google-login" class="btn btn-google">
-                  <svg width="14" height="14" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3h3.88c2.27-2.09 3.665-5.17 3.665-9.09z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.09C3.25 21.3 7.31 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.32a7.18 7.18 0 0 1 0-4.64V6.59H1.27a11.96 11.96 0 0 0 0 10.82l4.01-3.09z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.59l4.01 3.09c.95-2.83 3.6-4.93 6.72-4.93z"/>
-                  </svg>
-                  Login com Google
-                </button>
+      <section class="workspace-section" id="chat">
+        <div class="section-heading">
+          <div><span class="eyebrow">SEU PAINEL</span><h2>O chat da sua comunidade</h2><p>Conecte um canal e acompanhe tudo em tempo real.</p></div>
+          <div class="status-indicator-container">
+            <span id="twitch-status-pill" class="badge-status status-disconnected" title="Twitch: Desconectado"><span class="status-text">Twitch</span></span>
+            <span id="youtube-status-pill" class="badge-status status-disconnected" title="YouTube: Desconectado"><span class="status-text">YouTube</span></span>
+            <span id="kick-status-pill" class="badge-status status-disconnected" title="Kick: Desconectado"><span class="status-text">Kick</span></span>
+            <span id="tiktok-status-pill" class="badge-status status-disconnected" title="TikTok: Desconectado"><span class="status-text">TikTok</span></span>
+          </div>
+        </div>
+
+        <div class="dashboard-card glass-card">
+          <header class="dock-header">
+            <div class="dock-header-top">
+              <div class="dashboard-brand"><span class="brand-mark small-mark">P</span><strong>PlatChat <small>LIVE DOCK</small></strong></div>
+              <div class="header-actions">
+                <span class="connection-label"><i class="live-dot"></i> Conexão em tempo real</span>
+                <button id="btn-toggle-compact" class="btn-icon" type="button" title="Ativar modo compacto" aria-label="Ativar modo compacto" aria-pressed="false">⤢</button>
+                <button id="btn-toggle-config" class="btn-icon" title="Configurar canais e conexões" aria-label="Configurações">⚙</button>
               </div>
-              <div id="yt-auth-box" class="yt-auth-box hidden">
-                <div class="yt-profile-row">
-                  <img id="yt-channel-avatar" class="yt-profile-avatar" src="" alt="Avatar">
-                  <div class="yt-profile-info">
-                    <div id="yt-channel-title" class="yt-profile-name">Canal Conectado</div>
-                    <div id="yt-live-status-pill" class="yt-live-tag tag-offline">Sem live ativa</div>
-                  </div>
-                </div>
-                <div class="yt-actions-row">
-                  <button id="btn-youtube-detect" class="btn btn-sm btn-ghost" title="Procurar transmissão ativa">Buscar Live</button>
-                  <button id="btn-youtube-logout" class="btn btn-sm btn-ghost btn-danger" title="Desconectar conta Google">Sair</button>
-                </div>
+            </div>
+            <div id="config-drawer" class="config-drawer">
+              <div class="config-grid">
+                <div class="config-group"><div class="config-title"><span class="dot-platform twitch-dot"></span><strong>Twitch</strong></div><div class="input-row"><input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false"><button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button></div></div>
+                <div class="config-group"><div class="config-title"><span class="dot-platform youtube-dot"></span><strong>YouTube</strong><span class="free-badge">sem login</span></div><div class="input-row"><input type="text" id="youtube-channel-input" placeholder="ex: @LofiGirl ou link da live" autocomplete="off" spellcheck="false"><button id="btn-youtube-connect" class="btn btn-youtube">Conectar</button></div><div class="hint-text">Informe o @handle, ID do canal ou URL da live pública.</div></div>
+                <div class="config-group"><div class="config-title"><span class="dot-platform kick-dot"></span><strong>Kick</strong></div><div class="input-row"><input type="text" id="kick-channel-input" placeholder="ex: xqc ou link kick.com" autocomplete="off" spellcheck="false"><button id="btn-kick-connect" class="btn btn-kick">Conectar</button></div></div>
+                <div class="config-group"><div class="config-title"><span class="dot-platform tiktok-dot"></span><strong>TikTok Live</strong></div><div class="input-row"><input type="text" id="tiktok-channel-input" placeholder="ex: nome do usuário" autocomplete="off" spellcheck="false"><button id="btn-tiktok-connect" class="btn btn-tiktok">Conectar</button></div></div>
               </div>
-            </details>
-          </div>
-
-          <!-- Config Kick -->
-          <div class="config-group">
-            <div class="config-title">
-              <span class="dot-platform kick-dot"></span>
-              <strong>Kick</strong> (WebSocket Oficial)
+              <div class="drawer-footer"><span class="drawer-footer-label">Testar:</span><button id="btn-test-twitch" class="btn btn-sm btn-ghost">Twitch</button><button id="btn-test-youtube" class="btn btn-sm btn-ghost">YouTube</button><button id="btn-test-kick" class="btn btn-sm btn-ghost">Kick</button><button id="btn-test-tiktok" class="btn btn-sm btn-ghost">TikTok</button><button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger">Limpar chat</button></div>
             </div>
-            <div class="input-row">
-              <input type="text" id="kick-channel-input" placeholder="ex: xqc, westcol ou link kick.com/..." autocomplete="off" spellcheck="false">
-              <button id="btn-kick-connect" class="btn btn-kick">Conectar</button>
-            </div>
-            <div class="hint-text">Conexão WebSocket Pusher em tempo real com leitura de badges e emotes.</div>
-          </div>
-
-          <!-- Config TikTok Live -->
-          <div class="config-group">
-            <div class="config-title">
-              <span class="dot-platform tiktok-dot"></span>
-              <strong>TikTok Live</strong>
-            </div>
-            <div class="input-row">
-              <input type="text" id="tiktok-channel-input" placeholder="ex: @streamer ou nome do usuário" autocomplete="off" spellcheck="false">
-              <button id="btn-tiktok-connect" class="btn btn-tiktok">Conectar</button>
-            </div>
-            <div class="hint-text">Monitora comentários e presentes (gifts) de transmissões ao vivo ativas.</div>
-          </div>
+          </header>
+          <div id="chat-container" class="chat-container"><div id="messages-list" class="messages-list">
+            <div class="empty-state" id="empty-state"><div class="empty-icon">✦</div><h3>Seu chat está esperando por você</h3><p>Abra as configurações, conecte um canal e veja a conversa acontecer em um só lugar.</p><button class="btn-ghost empty-config-button" type="button" onclick="document.getElementById('btn-toggle-config').click()">Conectar meu primeiro canal</button></div>
+          </div></div>
+          <div id="scroll-bottom-pill" class="scroll-bottom-pill hidden"><button id="btn-scroll-bottom" class="btn-scroll-action"><span id="scroll-pill-text">Novas mensagens</span> ↓</button></div>
         </div>
+      </section>
 
-        <!-- Ferramentas e Testes de Mensagens -->
-        <div class="drawer-footer">
-          <span class="drawer-footer-label">Testes:</span>
-          <button id="btn-test-twitch" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Twitch">Twitch</button>
-          <button id="btn-test-youtube" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do YouTube">YouTube</button>
-          <button id="btn-test-kick" class="btn btn-sm btn-ghost" title="Gera mensagem de teste da Kick">Kick</button>
-          <button id="btn-test-tiktok" class="btn btn-sm btn-ghost" title="Gera mensagem de teste do TikTok Live">TikTok</button>
-          <button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger" title="Limpar mensagens visíveis">Limpar Chat</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Área de Exibição das Mensagens do Chat -->
-    <main id="chat-container" class="chat-container">
-      <div id="messages-list" class="messages-list">
-        <!-- Mensagem de boas-vindas / guia inicial -->
-        <div class="empty-state" id="empty-state">
-          <div class="empty-icon">💬</div>
-          <h3>Chat Unificado PlatChat</h3>
-          <p>Conecte seus canais da <strong>Twitch</strong>, <strong>YouTube</strong>, <strong>Kick</strong> ou <strong>TikTok Live</strong> pelo botão de configurações acima para monitorar tudo em tempo real no OBS!</p>
-        </div>
-      </div>
+      <section class="obs-section" id="obs-guide">
+        <div class="obs-intro"><span class="eyebrow">CONFIGURAÇÃO EM 1 MINUTO</span><h2>Seu chat dentro do OBS.<br><span>Sem complicação.</span></h2><p>Adicione o PlatChat como um Custom Browser Dock para acompanhar sua comunidade sem sair da transmissão.</p></div>
+        <ol class="obs-steps">
+          <li><span>01</span><div><strong>Abra os docks personalizados</strong><p>No OBS Studio, escolha <b>Docks → Custom Browser Docks</b> no menu superior.</p></div></li>
+          <li><span>02</span><div><strong>Adicione o PlatChat</strong><p>Nomeie seu dock como “PlatChat” e cole o endereço desta página no campo URL.</p></div></li>
+          <li><span>03</span><div><strong>Conecte e transmita</strong><p>Clique em Aplicar. Abra as configurações do dock, conecte seus canais e pronto!</p></div></li>
+        </ol>
+      </section>
     </main>
 
-    <!-- Botão Flutuante de Rolagem Pausada -->
-    <div id="scroll-bottom-pill" class="scroll-bottom-pill hidden">
-      <button id="btn-scroll-bottom" class="btn-scroll-action">
-        <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        <span id="scroll-pill-text">Novas mensagens</span>
-      </button>
-    </div>
-
-    <!-- Rodapé Institucional -->
-    <footer class="dock-footer" id="dock-footer">
-      <div class="footer-links">
-        <a href="/privacy" class="footer-link" target="_blank" rel="noopener noreferrer">Política de Privacidade</a>
-        <span class="footer-sep">•</span>
-        <a href="/terms" class="footer-link" target="_blank" rel="noopener noreferrer">Termos de Serviço</a>
-      </div>
+    <footer class="site-footer">
+      <a class="brand brand-link" href="/"><span class="brand-mark small-mark">P</span><span class="brand-title">PlatChat</span></a>
+      <p>Feito para aproximar você da sua comunidade.</p>
+      <div class="footer-links"><a href="/privacy">Privacidade</a><a href="/terms">Termos</a></div>
+      <small>© <span id="copyright-year"></span> PlatChat</small>
     </footer>
   </div>
-
   <script src="js/app.js"></script>
 </body>
 </html>

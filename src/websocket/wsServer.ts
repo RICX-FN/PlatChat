@@ -9,8 +9,6 @@ import {
 } from '../types/chat.js';
 import { TwitchIrcService } from '../services/twitch/twitchIrcService.js';
 import { YouTubePublicChatService } from '../services/youtube/youtubePublicChatService.js';
-import { YouTubeLiveChatService } from '../services/youtube/youtubeLiveChatService.js';
-import { YouTubeAuthService } from '../services/youtube/youtubeAuthService.js';
 import { KickChatService } from '../services/kick/kickChatService.js';
 import { TikTokLiveService } from '../services/tiktok/tiktokLiveService.js';
 import { MessageQueue } from '../services/queue/messageQueue.js';
@@ -28,8 +26,6 @@ export class ChatWsServer {
     httpServer: HttpServer,
     private twitchService: TwitchIrcService,
     private youtubePublicService: YouTubePublicChatService,
-    private youtubeOAuthService: YouTubeLiveChatService,
-    private youtubeAuthService: YouTubeAuthService,
     private kickService: KickChatService,
     private tiktokService: TikTokLiveService,
     private messageQueue: MessageQueue
@@ -96,9 +92,6 @@ export class ChatWsServer {
             if (command.channel) {
               console.log(`[WsServer] Comando: Conectar YouTube público (${command.channel})`);
               this.youtubePublicService.joinChannel(command.channel);
-            } else {
-              console.log('[WsServer] Comando: Detectar live do YouTube via OAuth');
-              this.youtubeOAuthService.detectAndJoinActiveLive();
             }
           } else if (command.platform === 'kick' && command.channel) {
             console.log(`[WsServer] Comando: Conectar Kick (${command.channel})`);
@@ -117,7 +110,6 @@ export class ChatWsServer {
           } else if (command.platform === 'youtube') {
             console.log('[WsServer] Comando: Desconectar YouTube');
             this.youtubePublicService.leaveChannel();
-            this.youtubeOAuthService.leaveLive();
           } else if (command.platform === 'kick') {
             console.log('[WsServer] Comando: Desconectar Kick');
             this.kickService.leaveChannel();
@@ -125,19 +117,6 @@ export class ChatWsServer {
             console.log('[WsServer] Comando: Desconectar TikTok Live');
             this.tiktokService.leaveChannel();
           }
-          break;
-        }
-
-        case 'detect_youtube_live': {
-          console.log('[WsServer] Comando: Forçar detecção de live ativa no YouTube (OAuth)');
-          this.youtubeOAuthService.detectAndJoinActiveLive();
-          break;
-        }
-
-        case 'youtube_logout': {
-          console.log('[WsServer] Comando: Logout Google / YouTube OAuth');
-          this.youtubeAuthService.logout();
-          this.youtubePublicService.leaveChannel();
           break;
         }
 
@@ -246,15 +225,7 @@ export class ChatWsServer {
     });
     this.youtubePublicService.on('status', () => this.broadcastStatus());
 
-    // 3. YouTube OAuth (Opcional / legado)
-    this.youtubeOAuthService.on('batch', (batch: UnifiedChatMessage[]) => {
-      this.messageQueue.pushBatch(batch);
-    });
-    this.youtubeOAuthService.on('status', () => this.broadcastStatus());
-    this.youtubeAuthService.on('authenticated', () => this.broadcastStatus());
-    this.youtubeAuthService.on('logout', () => this.broadcastStatus());
-
-    // 4. Kick
+    // 3. Kick
     this.kickService.on('message', (msg: UnifiedChatMessage) => {
       this.messageQueue.pushMessage(msg);
     });
@@ -263,7 +234,7 @@ export class ChatWsServer {
     });
     this.kickService.on('status', () => this.broadcastStatus());
 
-    // 5. TikTok Live
+    // 4. TikTok Live
     this.tiktokService.on('message', (msg: UnifiedChatMessage) => {
       this.messageQueue.pushMessage(msg);
     });
@@ -279,19 +250,9 @@ export class ChatWsServer {
   }
 
   public getAllStatuses(): AllPlatformStatuses {
-    // Para o YouTube, se o serviço público estiver ativo ou conectando, expõe ele;
-    // caso contrário, se houver sessão OAuth ativa, expõe o status OAuth
-    let ytStatus = this.youtubePublicService.getStatus();
-    if (ytStatus.status === 'disconnected') {
-      const oauthStatus = this.youtubeOAuthService.getStatus();
-      if (oauthStatus.isAuthenticated || oauthStatus.status !== 'disconnected') {
-        ytStatus = oauthStatus;
-      }
-    }
-
     return {
       twitch: this.twitchService.getStatus(),
-      youtube: ytStatus,
+      youtube: this.youtubePublicService.getStatus(),
       kick: this.kickService.getStatus(),
       tiktok: this.tiktokService.getStatus()
     };
