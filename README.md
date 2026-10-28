@@ -61,6 +61,9 @@ Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`,
 `JWT_SECRET` (com pelo menos 32 caracteres aleatórios) e `CLIENT_URL` no ambiente.
 O preço mensal está em `STRIPE_PRICE_ID`; quando disponível, configure também
 `STRIPE_ANNUAL_PRICE_ID` com o ID do preço recorrente anual no Stripe.
+No `.env` local, `STRIPE_ANNUAL_PRICE_ID=price_replace_with_real_annual_price_id`
+é apenas um placeholder: substitua-o por um ID `price_...` real antes de usar
+o checkout anual. O app não envia o placeholder ao Stripe nem troca o anual pelo mensal.
 O endpoint do webhook do Stripe é `/api/stripe/webhook`; configure-o para os eventos
 `checkout.session.completed`, `customer.subscription.updated` e
 `customer.subscription.deleted`. O checkout inclui sete dias de teste grátis;

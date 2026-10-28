@@ -105,9 +105,9 @@
       document.getElementById('subscription-price').textContent = monthlyPrice;
       document.getElementById('monthly-plan-price').textContent = monthlyPrice;
       if (price.annual) {
-        document.getElementById('plan-annual').disabled = false;
-        document.getElementById('plan-annual').setAttribute('aria-disabled', 'false');
         document.getElementById('annual-plan-price').textContent = formatPrice(price.annual);
+      } else {
+        document.getElementById('annual-plan-price').textContent = 'Configure o preço no Stripe';
       }
     } catch (error) {
       console.error('[PlatChat] Não foi possível carregar o preço da assinatura:', error);
@@ -121,7 +121,8 @@
       const response = await fetch(`/api/stripe/create-checkout-session?plan=${state.selectedPlan}`, { method: 'POST' });
       const result = await response.json();
       if (!response.ok || !result.url) {
-        throw new Error(result.error || 'Não foi possível abrir o checkout do plano mensal.');
+        const planName = state.selectedPlan === 'annual' ? 'anual' : 'mensal';
+        throw new Error(result.error || `Não foi possível abrir o checkout do plano ${planName}.`);
       }
       window.location.assign(result.url);
     } catch (error) {
@@ -390,7 +391,6 @@
       state.hasAutoCompacted = true;
       sessionStorage.setItem('platchat_auto_compacted', 'true');
       setCompactMode(true);
-      elements.configDrawer.classList.remove('open');
     }
   }
 

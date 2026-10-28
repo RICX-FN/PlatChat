@@ -739,7 +739,6 @@ body {
 .plan-option strong { font-size: 11px; }
 .plan-option span { color: #9995a6; font-size: 10px; }
 .plan-option.selected { border-color: rgba(169,133,255,.65); background: rgba(143,89,235,.16); }
-.plan-option:disabled { opacity: .58; cursor: not-allowed; }
 
 .workspace-section { padding: 92px 0 88px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }

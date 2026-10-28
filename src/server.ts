@@ -18,6 +18,7 @@ const server = http.createServer(app);
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
+const ANNUAL_PRICE_PLACEHOLDER = 'price_replace_with_real_annual_price_id';
 
 const getPrivateNetworkAddresses = (): string[] =>
   [...new Set(
@@ -165,7 +166,7 @@ app.get('/api/stripe/price', async (_req, res) => {
     if (price.unit_amount === null) throw new Error('Configured Stripe price has no fixed amount');
     let annual: { amount: number; currency: string; interval: string; interval_count: number } | null = null;
     const annualPriceId = process.env.STRIPE_ANNUAL_PRICE_ID;
-    if (annualPriceId) {
+    if (annualPriceId && annualPriceId !== ANNUAL_PRICE_PLACEHOLDER) {
       const annualPrice = await getStripe().prices.retrieve(annualPriceId);
       if (annualPrice.recurring?.interval !== 'year' || annualPrice.recurring.interval_count !== 1) {
         throw new Error('Configured Stripe annual price must be billed yearly');
@@ -183,7 +184,8 @@ app.get('/api/stripe/price', async (_req, res) => {
       currency: price.currency,
       interval: price.recurring?.interval,
       interval_count: price.recurring?.interval_count,
-      annual
+      annual,
+      annual_configured: annual !== null
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Stripe price is unavailable';
@@ -199,6 +201,12 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
   }
   const plan = requestedPlan === 'annual' ? 'annual' : 'monthly';
   const selectedPriceEnv = plan === 'annual' ? 'STRIPE_ANNUAL_PRICE_ID' : 'STRIPE_PRICE_ID';
+  const configuredPriceId = process.env[selectedPriceEnv];
+  if (plan === 'annual' && (!configuredPriceId || configuredPriceId === ANNUAL_PRICE_PLACEHOLDER)) {
+    return res.status(503).json({
+      error: 'Plano anual ainda não configurado. Substitua STRIPE_ANNUAL_PRICE_ID por um ID price_ real do Stripe.'
+    });
+  }
   const missingConfig = ['STRIPE_SECRET_KEY', selectedPriceEnv, 'CLIENT_URL']
     .filter((name) => !process.env[name]);
   if (missingConfig.length) {
@@ -209,7 +217,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
   }
 
   try {
-    const priceId = process.env[selectedPriceEnv];
+    const priceId = configuredPriceId;
     const clientUrl = process.env.CLIENT_URL;
     if (!priceId || !clientUrl) throw new Error('Stripe checkout configuration is incomplete');
     const session = await getStripe().checkout.sessions.create({
