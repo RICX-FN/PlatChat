@@ -13,6 +13,8 @@ export class YouTubePublicChatService extends EventEmitter {
   private reconnectAttempts = 0;
   private connectionGeneration = 0;
   private readonly maxReconnectAttempts = 6;
+  private lastHttpStatus: number | null = null;
+  private retryAfterMs = 0;
 
   constructor() {
     super();
@@ -50,11 +52,23 @@ export class YouTubePublicChatService extends EventEmitter {
       return false;
     }
 
+    return this.connectToChannel(input, parsed, true);
+  }
+
+  private async connectToChannel(
+    input: string,
+    parsed: { liveId: string } | { channelId: string } | { handle: string },
+    resetRetryState: boolean
+  ): Promise<boolean> {
     this.leaveChannel();
     this.isIntentionalDisconnect = false;
     const generation = this.connectionGeneration;
     this.currentIdentifier = input.trim();
-    this.reconnectAttempts = 0;
+    if (resetRetryState) {
+      this.reconnectAttempts = 0;
+    }
+    this.lastHttpStatus = null;
+    this.retryAfterMs = 0;
     this.updateStatus('connecting');
 
     try {
@@ -83,9 +97,10 @@ export class YouTubePublicChatService extends EventEmitter {
         if (generation !== this.connectionGeneration) return;
         const msg = err?.message || String(err);
         const code = typeof err?.code === 'string' ? ` (${err.code})` : '';
-        const responseStatus = typeof err?.response?.status === 'number'
-          ? ` [HTTP ${err.response.status}]`
-          : '';
+        const status = typeof err?.response?.status === 'number' ? err.response.status : null;
+        this.lastHttpStatus = status;
+        this.retryAfterMs = this.getRetryAfterMs(err?.response?.headers?.['retry-after']);
+        const responseStatus = status ? ` [HTTP ${status}]` : '';
         console.warn(`[YouTubeChat] Erro no leitor de chat do YouTube${responseStatus}${code}: ${msg}`);
         if (!this.isIntentionalDisconnect && this.status !== 'connected') {
           this.updateStatus('error', msg);
@@ -233,20 +248,36 @@ export class YouTubePublicChatService extends EventEmitter {
   private scheduleReconnect(): void {
     if (this.isIntentionalDisconnect || !this.currentIdentifier) return;
 
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    const isRateLimited = this.lastHttpStatus === 429;
+    if (!isRateLimited && this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.warn(`[YouTubeChat] Limite de tentativas de reconexão atingido para ${this.currentIdentifier}`);
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = Math.min(3000 * Math.pow(1.5, this.reconnectAttempts), 30000);
+    const delay = isRateLimited
+      ? Math.max(this.retryAfterMs, Math.min(60_000 * 2 ** (this.reconnectAttempts - 1), 30 * 60_000))
+      : Math.min(3000 * Math.pow(1.5, this.reconnectAttempts), 30000);
     console.log(`[YouTubeChat] Tentativa de reconexão #${this.reconnectAttempts} em ${Math.round(delay / 1000)}s...`);
 
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = setTimeout(() => {
       if (this.currentIdentifier && !this.isIntentionalDisconnect) {
-        this.joinChannel(this.currentIdentifier);
+        const identifier = this.currentIdentifier;
+        const parsed = this.parseInput(identifier);
+        if (parsed) void this.connectToChannel(identifier, parsed, false);
       }
     }, delay);
+  }
+
+  private getRetryAfterMs(value: unknown): number {
+    if (typeof value !== 'string' && typeof value !== 'number') return 0;
+    const seconds = Number(value);
+    if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+    if (typeof value === 'string') {
+      const timestamp = Date.parse(value);
+      if (Number.isFinite(timestamp)) return Math.max(0, timestamp - Date.now());
+    }
+    return 0;
   }
 }
