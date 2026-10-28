@@ -10,6 +10,7 @@ export class TikTokLiveService extends EventEmitter {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private isIntentionalDisconnect = false;
   private reconnectAttempts = 0;
+  private connectionGeneration = 0;
   private readonly maxReconnectAttempts = 5;
 
   constructor() {
@@ -44,6 +45,7 @@ export class TikTokLiveService extends EventEmitter {
 
     this.leaveChannel();
     this.isIntentionalDisconnect = false;
+    const generation = this.connectionGeneration;
     this.currentUsername = username;
     this.reconnectAttempts = 0;
     this.updateStatus('connecting');
@@ -59,12 +61,14 @@ export class TikTokLiveService extends EventEmitter {
       this.connection = tiktokConnection;
 
       tiktokConnection.on('connected', (state: any) => {
+        if (generation !== this.connectionGeneration) return;
         console.log(`[TikTokLive] Conectado à live de @${username} (Room ID: ${state?.roomId || 'ok'})`);
         this.reconnectAttempts = 0;
         this.updateStatus('connected');
       });
 
       tiktokConnection.on('disconnected', () => {
+        if (generation !== this.connectionGeneration) return;
         console.log(`[TikTokLive] Conexão com @${username} encerrada.`);
         if (!this.isIntentionalDisconnect) {
           this.updateStatus('disconnected', 'Conexão encerrada pelo TikTok');
@@ -73,11 +77,13 @@ export class TikTokLiveService extends EventEmitter {
       });
 
       tiktokConnection.on('streamEnd', () => {
+        if (generation !== this.connectionGeneration) return;
         console.log(`[TikTokLive] A transmissão ao vivo de @${username} terminou.`);
         this.updateStatus('disconnected', 'Transmissão ao vivo encerrada');
       });
 
       tiktokConnection.on('error', (err: any) => {
+        if (generation !== this.connectionGeneration) return;
         const errorMsg = err?.message || String(err);
         console.warn(`[TikTokLive] Erro na transmissão de @${username}: ${errorMsg}`);
         if (!this.isIntentionalDisconnect && this.status !== 'connected') {
@@ -87,6 +93,7 @@ export class TikTokLiveService extends EventEmitter {
 
       // Evento de comentários normais do chat
       tiktokConnection.on('chat', (data: any) => {
+        if (generation !== this.connectionGeneration) return;
         const unified = this.mapChatToUnified(data);
         if (unified) {
           this.emit('message', unified);
@@ -95,6 +102,7 @@ export class TikTokLiveService extends EventEmitter {
 
       // Evento de presentes (Gifts) enviados durante a live
       tiktokConnection.on('gift', (data: any) => {
+        if (generation !== this.connectionGeneration) return;
         // Notifica apenas término de combo ou presentes unitários
         if (data.giftType === 1 || data.repeatEnd === true || data.repeatEnd === 1) {
           const unified = this.mapGiftToUnified(data);
@@ -105,8 +113,14 @@ export class TikTokLiveService extends EventEmitter {
       });
 
       await tiktokConnection.connect();
+      if (generation !== this.connectionGeneration) {
+        tiktokConnection.removeAllListeners();
+        await tiktokConnection.disconnect();
+        return false;
+      }
       return true;
     } catch (err: any) {
+      if (generation !== this.connectionGeneration) return false;
       const errorMsg = err?.message || String(err);
       console.warn(`[TikTokLive] Falha ao conectar em @${username}: ${errorMsg}`);
       this.updateStatus('error', errorMsg);
@@ -116,6 +130,7 @@ export class TikTokLiveService extends EventEmitter {
   }
 
   public leaveChannel(): void {
+    this.connectionGeneration++;
     this.isIntentionalDisconnect = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);

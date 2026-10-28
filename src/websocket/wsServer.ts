@@ -1,11 +1,10 @@
 import { Server as HttpServer } from 'http';
 import WebSocket, { WebSocketServer, RawData } from 'ws';
-import { 
-  UnifiedChatMessage, 
-  ClientCommand, 
-  ServerEvent, 
-  PlatformStatus,
-  AllPlatformStatuses 
+import {
+  UnifiedChatMessage,
+  ClientCommand,
+  ServerEvent,
+  AllPlatformStatuses
 } from '../types/chat.js';
 import { TwitchIrcService } from '../services/twitch/twitchIrcService.js';
 import { YouTubePublicChatService } from '../services/youtube/youtubePublicChatService.js';
@@ -17,261 +16,240 @@ interface ExtWebSocket extends WebSocket {
   isAlive: boolean;
 }
 
+interface ChatSession {
+  twitchService: TwitchIrcService;
+  youtubePublicService: YouTubePublicChatService;
+  kickService: KickChatService;
+  tiktokService: TikTokLiveService;
+  messageQueue: MessageQueue;
+}
+
 export class ChatWsServer {
   private wss: WebSocketServer;
-  private clients: Set<ExtWebSocket> = new Set();
+  private sessions = new Map<ExtWebSocket, ChatSession>();
   private pingInterval: NodeJS.Timeout | null = null;
 
-  constructor(
-    httpServer: HttpServer,
-    private twitchService: TwitchIrcService,
-    private youtubePublicService: YouTubePublicChatService,
-    private kickService: KickChatService,
-    private tiktokService: TikTokLiveService,
-    private messageQueue: MessageQueue
-  ) {
+  constructor(httpServer: HttpServer) {
     this.wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-
     this.setupWebSocketServer();
-    this.setupServiceListeners();
     this.setupHeartbeat();
+  }
+
+  private createSession(client: ExtWebSocket): ChatSession {
+    const session: ChatSession = {
+      twitchService: new TwitchIrcService(),
+      youtubePublicService: new YouTubePublicChatService(),
+      kickService: new KickChatService(),
+      tiktokService: new TikTokLiveService(),
+      messageQueue: new MessageQueue({ flushIntervalMs: 50, maxHistorySize: 150 })
+    };
+
+    session.twitchService.on('message', (message: UnifiedChatMessage) => {
+      session.messageQueue.pushMessage(message);
+    });
+    session.twitchService.on('status', () => this.broadcastStatus(client, session));
+
+    session.youtubePublicService.on('message', (message: UnifiedChatMessage) => {
+      session.messageQueue.pushMessage(message);
+    });
+    session.youtubePublicService.on('batch', (messages: UnifiedChatMessage[]) => {
+      session.messageQueue.pushBatch(messages);
+    });
+    session.youtubePublicService.on('status', () => this.broadcastStatus(client, session));
+
+    session.kickService.on('message', (message: UnifiedChatMessage) => {
+      session.messageQueue.pushMessage(message);
+    });
+    session.kickService.on('batch', (messages: UnifiedChatMessage[]) => {
+      session.messageQueue.pushBatch(messages);
+    });
+    session.kickService.on('status', () => this.broadcastStatus(client, session));
+
+    session.tiktokService.on('message', (message: UnifiedChatMessage) => {
+      session.messageQueue.pushMessage(message);
+    });
+    session.tiktokService.on('status', () => this.broadcastStatus(client, session));
+    session.messageQueue.on('batch', (messages: UnifiedChatMessage[]) => {
+      this.sendToClient(client, { type: 'batch', data: messages });
+    });
+
+    return session;
   }
 
   private setupWebSocketServer(): void {
     this.wss.on('connection', (ws: WebSocket) => {
-      const extWs = ws as ExtWebSocket;
-      extWs.isAlive = true;
-      this.clients.add(extWs);
+      const client = ws as ExtWebSocket;
+      client.isAlive = true;
+      const session = this.createSession(client);
+      this.sessions.set(client, session);
 
-      console.log(`[WsServer] Novo cliente conectado (total: ${this.clients.size})`);
+      console.log(`[WsServer] Sessão isolada conectada (total: ${this.sessions.size})`);
 
-      extWs.on('pong', () => {
-        extWs.isAlive = true;
+      client.on('pong', () => {
+        client.isAlive = true;
       });
 
-      // Envia status consolidado de todas as plataformas e histórico recente
-      this.sendToClient(extWs, {
+      this.sendToClient(client, {
         type: 'status_update',
-        data: this.getAllStatuses()
+        data: this.getAllStatuses(session)
       });
 
-      const history = this.messageQueue.getHistory();
-      if (history.length > 0) {
-        this.sendToClient(extWs, {
-          type: 'history',
-          data: history
-        });
-      }
-
-      extWs.on('message', (raw: RawData) => {
-        this.handleClientMessage(extWs, raw.toString());
+      client.on('message', (raw: RawData) => {
+        this.handleClientMessage(client, session, raw.toString());
       });
 
-      extWs.on('close', () => {
-        this.clients.delete(extWs);
-        console.log(`[WsServer] Cliente desconectado (restantes: ${this.clients.size})`);
+      client.on('close', () => {
+        this.closeSession(client, session);
       });
 
-      extWs.on('error', (err) => {
-        console.error(`[WsServer] Erro no socket cliente: ${err.message}`);
-        this.clients.delete(extWs);
+      client.on('error', (error) => {
+        console.error(`[WsServer] Erro no socket cliente: ${error.message}`);
+        this.closeSession(client, session);
       });
     });
   }
 
-  private handleClientMessage(ws: ExtWebSocket, rawData: string): void {
+  private handleClientMessage(client: ExtWebSocket, session: ChatSession, rawData: string): void {
     try {
       const command = JSON.parse(rawData) as ClientCommand;
 
       switch (command.action) {
         case 'subscribe': {
-          if (command.platform === 'twitch' && command.channel) {
-            console.log(`[WsServer] Comando: Conectar Twitch (#${command.channel})`);
-            this.twitchService.joinChannel(command.channel);
-          } else if (command.platform === 'youtube') {
-            if (command.channel) {
-              console.log(`[WsServer] Comando: Conectar YouTube público (${command.channel})`);
-              this.youtubePublicService.joinChannel(command.channel);
-            }
-          } else if (command.platform === 'kick' && command.channel) {
-            console.log(`[WsServer] Comando: Conectar Kick (${command.channel})`);
-            this.kickService.joinChannel(command.channel);
-          } else if (command.platform === 'tiktok' && command.channel) {
-            console.log(`[WsServer] Comando: Conectar TikTok Live (@${command.channel})`);
-            this.tiktokService.joinChannel(command.channel);
+          if (!command.channel) break;
+          switch (command.platform) {
+            case 'twitch':
+              console.log(`[WsServer] Sessão conectando Twitch (#${command.channel})`);
+              session.twitchService.joinChannel(command.channel);
+              break;
+            case 'youtube':
+              console.log(`[WsServer] Sessão conectando YouTube (${command.channel})`);
+              void session.youtubePublicService.joinChannel(command.channel);
+              break;
+            case 'kick':
+              console.log(`[WsServer] Sessão conectando Kick (${command.channel})`);
+              void session.kickService.joinChannel(command.channel);
+              break;
+            case 'tiktok':
+              console.log(`[WsServer] Sessão conectando TikTok (@${command.channel})`);
+              void session.tiktokService.joinChannel(command.channel);
+              break;
           }
           break;
         }
 
-        case 'unsubscribe': {
-          if (command.platform === 'twitch') {
-            console.log('[WsServer] Comando: Desconectar Twitch');
-            this.twitchService.leaveChannel();
-          } else if (command.platform === 'youtube') {
-            console.log('[WsServer] Comando: Desconectar YouTube');
-            this.youtubePublicService.leaveChannel();
-          } else if (command.platform === 'kick') {
-            console.log('[WsServer] Comando: Desconectar Kick');
-            this.kickService.leaveChannel();
-          } else if (command.platform === 'tiktok') {
-            console.log('[WsServer] Comando: Desconectar TikTok Live');
-            this.tiktokService.leaveChannel();
+        case 'unsubscribe':
+          switch (command.platform) {
+            case 'twitch':
+              session.twitchService.leaveChannel();
+              break;
+            case 'youtube':
+              session.youtubePublicService.leaveChannel();
+              break;
+            case 'kick':
+              session.kickService.leaveChannel();
+              break;
+            case 'tiktok':
+              session.tiktokService.leaveChannel();
+              break;
           }
           break;
-        }
 
-        case 'get_history': {
-          this.sendToClient(ws, {
+        case 'get_history':
+          this.sendToClient(client, {
             type: 'history',
-            data: this.messageQueue.getHistory()
+            data: session.messageQueue.getHistory()
           });
           break;
-        }
 
-        case 'get_status': {
-          this.sendToClient(ws, {
+        case 'get_status':
+          this.sendToClient(client, {
             type: 'status_update',
-            data: this.getAllStatuses()
+            data: this.getAllStatuses(session)
           });
           break;
-        }
 
         case 'test_message': {
-          const platform = command.platform || 'twitch';
-          let sampleMessage: UnifiedChatMessage;
-
-          const baseId = `test-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-          const timestamp = Date.now();
-
-          switch (platform) {
-            case 'youtube':
-              sampleMessage = {
-                id: baseId,
-                platform: 'youtube',
-                username: 'YouTubeFan_2026',
-                avatar: 'https://picsum.photos/seed/yt/64',
-                message: command.message || 'Mensagem de teste do YouTube Live! 🔴',
-                timestamp,
-                color: '#FF3333',
-                badges: ['member']
-              };
-              break;
-
-            case 'kick':
-              sampleMessage = {
-                id: baseId,
-                platform: 'kick',
-                username: 'KickViewer_77',
-                avatar: undefined,
-                message: command.message || 'Salve! Mensagem de teste da Kick! 🟢',
-                timestamp,
-                color: '#53FC18',
-                badges: ['moderator', 'lvl 10']
-              };
-              break;
-
-            case 'tiktok':
-              sampleMessage = {
-                id: baseId,
-                platform: 'tiktok',
-                username: 'TikToker_Live',
-                avatar: 'https://picsum.photos/seed/tt/64',
-                message: command.message || 'Bora bater a meta de curtidas! Mensagem do TikTok Live! 🎵',
-                timestamp,
-                color: '#00F2FE',
-                badges: ['subscriber']
-              };
-              break;
-
-            case 'twitch':
-            default:
-              sampleMessage = {
-                id: baseId,
-                platform: 'twitch',
-                username: 'TwitchViewer_99',
-                message: command.message || 'Mensagem de teste vinda da Twitch! 🟣',
-                timestamp,
-                color: '#9146FF',
-                badges: ['vip']
-              };
-              break;
-          }
-
-          this.messageQueue.pushMessage(sampleMessage);
+          const message = this.createTestMessage(command);
+          if (message) session.messageQueue.pushMessage(message);
           break;
         }
 
         default:
-          console.warn(`[WsServer] Ação desconhecida: ${(command as any).action}`);
+          console.warn(`[WsServer] Ação desconhecida: ${String(command.action)}`);
       }
-    } catch (err: any) {
-      console.error(`[WsServer] Erro ao processar comando do cliente: ${err.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`[WsServer] Erro ao processar comando do cliente: ${message}`);
     }
   }
 
-  private setupServiceListeners(): void {
-    // 1. Twitch
-    this.twitchService.on('message', (msg: UnifiedChatMessage) => {
-      this.messageQueue.pushMessage(msg);
-    });
-    this.twitchService.on('status', () => this.broadcastStatus());
+  private createTestMessage(command: ClientCommand): UnifiedChatMessage | null {
+    const timestamp = Date.now();
+    const baseId = `test-${timestamp}-${Math.random().toString(36).substring(2, 7)}`;
 
-    // 2. YouTube Público (Sem autenticação)
-    this.youtubePublicService.on('message', (msg: UnifiedChatMessage) => {
-      this.messageQueue.pushMessage(msg);
-    });
-    this.youtubePublicService.on('batch', (batch: UnifiedChatMessage[]) => {
-      this.messageQueue.pushBatch(batch);
-    });
-    this.youtubePublicService.on('status', () => this.broadcastStatus());
-
-    // 3. Kick
-    this.kickService.on('message', (msg: UnifiedChatMessage) => {
-      this.messageQueue.pushMessage(msg);
-    });
-    this.kickService.on('batch', (batch: UnifiedChatMessage[]) => {
-      this.messageQueue.pushBatch(batch);
-    });
-    this.kickService.on('status', () => this.broadcastStatus());
-
-    // 4. TikTok Live
-    this.tiktokService.on('message', (msg: UnifiedChatMessage) => {
-      this.messageQueue.pushMessage(msg);
-    });
-    this.tiktokService.on('status', () => this.broadcastStatus());
-
-    // Fila centralizadora -> Clientes conectados (em lote ordenado cronologicamente)
-    this.messageQueue.on('batch', (batch: UnifiedChatMessage[]) => {
-      this.broadcast({
-        type: 'batch',
-        data: batch
-      });
-    });
+    switch (command.platform) {
+      case 'youtube':
+        return {
+          id: baseId,
+          platform: 'youtube',
+          username: 'YouTubeFan_2026',
+          avatar: 'https://picsum.photos/seed/yt/64',
+          message: command.message || 'Mensagem de teste do YouTube Live! 🔴',
+          timestamp,
+          color: '#FF3333',
+          badges: ['member']
+        };
+      case 'kick':
+        return {
+          id: baseId,
+          platform: 'kick',
+          username: 'KickViewer_77',
+          message: command.message || 'Salve! Mensagem de teste da Kick! 🟢',
+          timestamp,
+          color: '#53FC18',
+          badges: ['moderator', 'lvl 10']
+        };
+      case 'tiktok':
+        return {
+          id: baseId,
+          platform: 'tiktok',
+          username: 'TikToker_Live',
+          avatar: 'https://picsum.photos/seed/tt/64',
+          message: command.message || 'Bora bater a meta de curtidas! Mensagem do TikTok Live! 🎵',
+          timestamp,
+          color: '#00F2FE',
+          badges: ['subscriber']
+        };
+      case 'twitch':
+      case undefined:
+        return {
+          id: baseId,
+          platform: 'twitch',
+          username: 'TwitchViewer_99',
+          message: command.message || 'Mensagem de teste vinda da Twitch! 🟣',
+          timestamp,
+          color: '#9146FF',
+          badges: ['vip']
+        };
+      default:
+        return null;
+    }
   }
 
-  public getAllStatuses(): AllPlatformStatuses {
+  private getAllStatuses(session: ChatSession): AllPlatformStatuses {
     return {
-      twitch: this.twitchService.getStatus(),
-      youtube: this.youtubePublicService.getStatus(),
-      kick: this.kickService.getStatus(),
-      tiktok: this.tiktokService.getStatus()
+      twitch: session.twitchService.getStatus(),
+      youtube: session.youtubePublicService.getStatus(),
+      kick: session.kickService.getStatus(),
+      tiktok: session.tiktokService.getStatus()
     };
   }
 
-  private broadcastStatus(): void {
-    this.broadcast({
+  private broadcastStatus(client: ExtWebSocket, session: ChatSession): void {
+    this.sendToClient(client, {
       type: 'status_update',
-      data: this.getAllStatuses()
+      data: this.getAllStatuses(session)
     });
-  }
-
-  private broadcast<T>(event: ServerEvent<T>): void {
-    const payload = JSON.stringify(event);
-    for (const client of this.clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(payload);
-      }
-    }
   }
 
   private sendToClient<T>(client: ExtWebSocket, event: ServerEvent<T>): void {
@@ -280,12 +258,29 @@ export class ChatWsServer {
     }
   }
 
+  private closeSession(client: ExtWebSocket, session: ChatSession): void {
+    if (!this.sessions.delete(client)) return;
+
+    session.twitchService.removeAllListeners();
+    session.youtubePublicService.removeAllListeners();
+    session.kickService.removeAllListeners();
+    session.tiktokService.removeAllListeners();
+    session.messageQueue.removeAllListeners();
+
+    session.twitchService.leaveChannel();
+    session.youtubePublicService.leaveChannel();
+    session.kickService.leaveChannel();
+    session.tiktokService.leaveChannel();
+    session.messageQueue.clear();
+
+    console.log(`[WsServer] Sessão isolada encerrada (restantes: ${this.sessions.size})`);
+  }
+
   private setupHeartbeat(): void {
     this.pingInterval = setInterval(() => {
-      for (const client of this.clients) {
+      for (const client of this.sessions.keys()) {
         if (!client.isAlive) {
           client.terminate();
-          this.clients.delete(client);
           continue;
         }
         client.isAlive = false;
@@ -294,9 +289,15 @@ export class ChatWsServer {
     }, 30000);
   }
 
+  public getConnectedClientCount(): number {
+    return this.sessions.size;
+  }
+
   public close(): void {
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
+    if (this.pingInterval) clearInterval(this.pingInterval);
+    for (const [client, session] of this.sessions) {
+      this.closeSession(client, session);
+      client.close();
     }
     this.wss.close();
   }

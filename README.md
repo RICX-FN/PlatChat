@@ -13,7 +13,8 @@ Chat Unificado de alta performance desenvolvido para OBS Studio. O sistema conso
   - **YouTube**: Leitura de chat em tempo real sem necessidade de conta ou login (basta informar o `@handle`, ID do canal ou link da live).
   - **Kick**: Conexão WebSocket oficial via Pusher com negociação dinâmica de credenciais e leitura instantânea de histórico inicial.
   - **TikTok Live**: Leitura de chat e presentes via Webcast Push em tempo real informando apenas o `@usuário`.
-- **Arquitetura**: Desacoplada e orientada a eventos (`EventEmitter`), com serviços isolados por plataforma e fila centralizadora com ordenação cronológica estrita.
+- **Arquitetura**: Desacoplada e orientada a eventos (`EventEmitter`), com uma instância de cada serviço e uma fila cronológica independente por conexão WebSocket.
+- **Sessões de chat**: Cada conexão WebSocket recebe status, conexões e histórico próprios. Conectar, desconectar ou simular mensagens em uma sessão não afeta outras. As preferências de canal ficam no `sessionStorage` daquela aba, são restauradas após atualizar e não são compartilhadas com outras abas; o estado do chat é descartado quando a sessão WebSocket termina.
 
 ---
 
@@ -76,6 +77,19 @@ npm run build
 npm start
 ```
 
+### Acessar de outro computador na rede local
+
+O servidor usa `HOST=0.0.0.0` por padrão, permitindo conexões pela rede local, e
+mostra no terminal os endereços privados disponíveis ao iniciar. No outro
+computador, conectado à mesma rede Wi-Fi/roteador, abra o endereço exibido,
+por exemplo `http://192.168.1.8:3000`. O WebSocket acompanha automaticamente
+esse endereço.
+
+Se não conectar, permita conexões TCP de entrada na porta `3000` no firewall do
+computador que executa PlatChat, apenas no perfil de rede privada. Não configure
+encaminhamento de porta no roteador nem exponha essa porta à internet. Para
+manter o acesso local apenas, defina `HOST=127.0.0.1` no `.env`.
+
 ---
 
 ## 🎥 Como Embutir no OBS Studio (Custom Browser Dock)
@@ -95,3 +109,4 @@ npm start
    - **Kick**: Digite o canal (ex: `xqc`) e clique em **Conectar**.
    - **TikTok Live**: Digite o nome de usuário (ex: `@streamer`) e clique em **Conectar**.
    Após conectar um canal, o PlatChat recolhe automaticamente a apresentação e maximiza o chat. O botão ⤢/⤡ alterna entre o modo compacto e a página completa; `?dock=1` abre sempre diretamente no modo compacto. O histórico visual é limitado às últimas 150 mensagens para manter o painel leve.
+   As conexões e o histórico pertencem à sessão da aba do navegador/OBS que os criou; atualizar o painel reconecta os canais salvos naquela aba, sem compartilhar canais ou mensagens com outras abas ou visitantes. Fechar a aba encerra a sessão e suas conexões.

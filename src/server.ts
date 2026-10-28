@@ -1,15 +1,11 @@
 import http from 'http';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { TwitchIrcService } from './services/twitch/twitchIrcService.js';
-import { YouTubePublicChatService } from './services/youtube/youtubePublicChatService.js';
-import { KickChatService } from './services/kick/kickChatService.js';
-import { TikTokLiveService } from './services/tiktok/tiktokLiveService.js';
-import { MessageQueue } from './services/queue/messageQueue.js';
 import { ChatWsServer } from './websocket/wsServer.js';
 
 dotenv.config();
@@ -23,26 +19,23 @@ const server = http.createServer(app);
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
+const getPrivateNetworkAddresses = (): string[] =>
+  [...new Set(
+    Object.values(os.networkInterfaces())
+      .flatMap((interfaces) => interfaces ?? [])
+      .filter(({ address, family, internal }) =>
+        family === 'IPv4' &&
+        !internal &&
+        /^(10|192\.168|172\.(1[6-9]|2\d|3[01]))\./.test(address)
+      )
+      .map(({ address }) => address)
+  )];
+
 // Configuração de arquivos estáticos para o painel web (OBS Dock)
 const publicDir = path.resolve(__dirname, '../public');
 app.use(express.static(publicDir));
 
-// Instanciação modular dos serviços das 4 plataformas
-const twitchService = new TwitchIrcService();
-const youtubePublicService = new YouTubePublicChatService();
-const kickService = new KickChatService();
-const tiktokService = new TikTokLiveService();
-const messageQueue = new MessageQueue({ flushIntervalMs: 50, maxHistorySize: 150 });
-
-// Inicialização do servidor WebSocket unificado
-const chatWsServer = new ChatWsServer(
-  server, 
-  twitchService, 
-  youtubePublicService,
-  kickService,
-  tiktokService,
-  messageQueue
-);
+const chatWsServer = new ChatWsServer(server);
 
 app.get('/', (_req, res) => {
   res.sendFile(path.resolve(publicDir, 'index.html'));
@@ -160,8 +153,6 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     return res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
-
-app.use(express.json());
 
 app.get('/api/stripe/price', async (_req, res) => {
   try {
@@ -294,92 +285,23 @@ app.get('/api/status', (_req, res) => {
   res.json({
     uptime: process.uptime(),
     timestamp: Date.now(),
-    platforms: chatWsServer.getAllStatuses(),
-    messageQueueHistoryCount: messageQueue.getHistory().length
+    activeChatSessions: chatWsServer.getConnectedClientCount()
   });
 });
 
-// Controle Twitch
-app.post('/api/twitch/connect', (req, res) => {
-  const { channel } = req.body;
-  if (!channel) return res.status(400).json({ error: 'Parâmetro channel é obrigatório' });
-  twitchService.joinChannel(channel);
-  res.json({ success: true, status: twitchService.getStatus() });
-});
-
-app.post('/api/twitch/disconnect', (_req, res) => {
-  twitchService.leaveChannel();
-  res.json({ success: true, status: twitchService.getStatus() });
-});
-
-// Controle YouTube Público (Direto sem autenticação)
-app.post('/api/youtube/connect', async (req, res) => {
-  const { channel } = req.body;
-  if (!channel) return res.status(400).json({ error: 'Parâmetro channel (@handle, ID ou URL) é obrigatório' });
-  const success = await youtubePublicService.joinChannel(channel);
-  res.json({ success, status: youtubePublicService.getStatus() });
-});
-
-app.post('/api/youtube/disconnect', (_req, res) => {
-  youtubePublicService.leaveChannel();
-  res.json({ success: true, status: youtubePublicService.getStatus() });
-});
-
-// Controle Kick
-app.post('/api/kick/connect', async (req, res) => {
-  const { channel } = req.body;
-  if (!channel) return res.status(400).json({ error: 'Parâmetro channel é obrigatório' });
-  const success = await kickService.joinChannel(channel);
-  res.json({ success, status: kickService.getStatus() });
-});
-
-app.post('/api/kick/disconnect', (_req, res) => {
-  kickService.leaveChannel();
-  res.json({ success: true, status: kickService.getStatus() });
-});
-
-// Controle TikTok Live
-app.post('/api/tiktok/connect', async (req, res) => {
-  const { username } = req.body;
-  if (!username) return res.status(400).json({ error: 'Parâmetro username é obrigatório' });
-  const success = await tiktokService.joinChannel(username);
-  res.json({ success, status: tiktokService.getStatus() });
-});
-
-app.post('/api/tiktok/disconnect', (_req, res) => {
-  tiktokService.leaveChannel();
-  res.json({ success: true, status: tiktokService.getStatus() });
-});
-
-/* ==========================================================================
-   Inicialização Opcional a partir de Variáveis de Ambiente
-   ========================================================================== */
-
-if (process.env.AUTO_CONNECT_TWITCH) {
-  console.log(`[AutoConnect] Conectando automaticamente à Twitch: ${process.env.AUTO_CONNECT_TWITCH}`);
-  twitchService.joinChannel(process.env.AUTO_CONNECT_TWITCH);
-}
-
-if (process.env.AUTO_CONNECT_YOUTUBE) {
-  console.log(`[AutoConnect] Conectando automaticamente ao YouTube: ${process.env.AUTO_CONNECT_YOUTUBE}`);
-  youtubePublicService.joinChannel(process.env.AUTO_CONNECT_YOUTUBE);
-}
-
-if (process.env.AUTO_CONNECT_KICK) {
-  console.log(`[AutoConnect] Conectando automaticamente à Kick: ${process.env.AUTO_CONNECT_KICK}`);
-  kickService.joinChannel(process.env.AUTO_CONNECT_KICK);
-}
-
-if (process.env.AUTO_CONNECT_TIKTOK) {
-  console.log(`[AutoConnect] Conectando automaticamente ao TikTok Live: ${process.env.AUTO_CONNECT_TIKTOK}`);
-  tiktokService.joinChannel(process.env.AUTO_CONNECT_TIKTOK);
-}
-
 // Iniciar servidor HTTP
 server.listen(PORT, HOST, () => {
+  const lanAddresses = getPrivateNetworkAddresses();
+
   console.log('====================================================');
   console.log(`🚀 PlatChat Backend iniciado com sucesso! (4 Plataformas)`);
   console.log(`📡 Servidor HTTP & WebSocket: http://localhost:${PORT}`);
+  lanAddresses.forEach((address) => {
+    console.log(`🏠 Acesso pela rede local: http://${address}:${PORT}`);
+  });
+  if (HOST === '0.0.0.0' && lanAddresses.length === 0) {
+    console.log('🏠 Nenhum endereço IPv4 privado encontrado; confira a conexão de rede.');
+  }
   console.log(`🖥️  OBS Custom Browser Dock URL: http://localhost:${PORT}`);
   console.log(`🟣 Twitch  |  🔴 YouTube  |  🟢 Kick  |  🎵 TikTok Live`);
   console.log('====================================================');
@@ -388,10 +310,6 @@ server.listen(PORT, HOST, () => {
 // Encerramento gracioso
 const shutdown = () => {
   console.log('\n[Server] Encerrando serviços...');
-  twitchService.leaveChannel();
-  youtubePublicService.leaveChannel();
-  kickService.leaveChannel();
-  tiktokService.leaveChannel();
   chatWsServer.close();
   server.close(() => {
     console.log('[Server] Finalizado com sucesso.');

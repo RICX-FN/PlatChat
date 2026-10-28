@@ -1,7 +1,0 @@
-Atualizar o readme do github(Pending)
-
-Remover autenticação com google Oauth(Pending)
-
-Pesquisar se tem como adicionar metodo de pagamento com stripe sem precisar de users table(pending)
-
-Refatorar interface inicial(Pending)

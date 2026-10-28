@@ -173,15 +173,18 @@ export class TwitchIrcService extends EventEmitter {
 
   private closeSocket(): void {
     if (this.ws) {
-      this.ws.removeAllListeners();
+      const ws = this.ws;
+      this.ws = null;
+      ws.removeAllListeners();
+      // Aborting a handshake can emit an error after its connection listeners are removed.
+      ws.on('error', () => {});
       try {
-        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
-          this.ws.close();
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close();
         }
       } catch {
         // Ignora erros ao fechar
       }
-      this.ws = null;
     }
   }
 }

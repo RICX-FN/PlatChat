@@ -11,6 +11,7 @@ export class YouTubePublicChatService extends EventEmitter {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private isIntentionalDisconnect = false;
   private reconnectAttempts = 0;
+  private connectionGeneration = 0;
   private readonly maxReconnectAttempts = 6;
 
   constructor() {
@@ -51,6 +52,7 @@ export class YouTubePublicChatService extends EventEmitter {
 
     this.leaveChannel();
     this.isIntentionalDisconnect = false;
+    const generation = this.connectionGeneration;
     this.currentIdentifier = input.trim();
     this.reconnectAttempts = 0;
     this.updateStatus('connecting');
@@ -62,6 +64,7 @@ export class YouTubePublicChatService extends EventEmitter {
       this.liveChat = liveChatInstance;
 
       liveChatInstance.on('start', (liveId: string) => {
+        if (generation !== this.connectionGeneration) return;
         console.log(`[YouTubeChat] Chat ao vivo iniciado com sucesso! Live ID: ${liveId}`);
         this.currentLiveId = liveId;
         this.reconnectAttempts = 0;
@@ -69,6 +72,7 @@ export class YouTubePublicChatService extends EventEmitter {
       });
 
       liveChatInstance.on('chat', (chatItem: any) => {
+        if (generation !== this.connectionGeneration) return;
         const unified = this.mapToUnified(chatItem);
         if (unified) {
           this.emit('message', unified);
@@ -76,6 +80,7 @@ export class YouTubePublicChatService extends EventEmitter {
       });
 
       liveChatInstance.on('error', (err: any) => {
+        if (generation !== this.connectionGeneration) return;
         const msg = err?.message || String(err);
         console.warn(`[YouTubeChat] Erro no leitor de chat do YouTube: ${msg}`);
         if (!this.isIntentionalDisconnect && this.status !== 'connected') {
@@ -85,6 +90,7 @@ export class YouTubePublicChatService extends EventEmitter {
       });
 
       liveChatInstance.on('end', (reason?: string) => {
+        if (generation !== this.connectionGeneration) return;
         console.log(`[YouTubeChat] Chat finalizado: ${reason || 'Fim da transmissão'}`);
         if (!this.isIntentionalDisconnect) {
           this.updateStatus('disconnected', reason || 'Transmissão finalizada');
@@ -93,12 +99,18 @@ export class YouTubePublicChatService extends EventEmitter {
       });
 
       const ok = await liveChatInstance.start();
+      if (generation !== this.connectionGeneration) {
+        liveChatInstance.removeAllListeners();
+        liveChatInstance.stop();
+        return false;
+      }
       if (!ok) {
         throw new Error('Não foi possível iniciar o chat. Verifique se o canal está ao vivo.');
       }
 
       return true;
     } catch (err: any) {
+      if (generation !== this.connectionGeneration) return false;
       const msg = err?.message || String(err);
       console.warn(`[YouTubeChat] Falha ao iniciar monitoramento: ${msg}`);
       this.updateStatus('error', msg);
@@ -108,6 +120,7 @@ export class YouTubePublicChatService extends EventEmitter {
   }
 
   public leaveChannel(): void {
+    this.connectionGeneration++;
     this.isIntentionalDisconnect = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);

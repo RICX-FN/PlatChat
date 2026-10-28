@@ -92,6 +92,7 @@ export class KickChatService extends EventEmitter {
   private pingInterval: NodeJS.Timeout | null = null;
   private isIntentionalDisconnect = false;
   private reconnectAttempts = 0;
+  private connectionGeneration = 0;
   private readonly maxReconnectAttempts = 10;
 
   constructor() {
@@ -129,6 +130,7 @@ export class KickChatService extends EventEmitter {
 
     this.leaveChannel();
     this.isIntentionalDisconnect = false;
+    const generation = this.connectionGeneration;
     this.currentSlug = slug;
     this.reconnectAttempts = 0;
     this.updateStatus('connecting');
@@ -136,6 +138,7 @@ export class KickChatService extends EventEmitter {
     try {
       console.log(`[KickChat] Resolvendo metadados do canal "${slug}"...`);
       const channelData = await this.fetchChannelData(slug);
+      if (generation !== this.connectionGeneration) return false;
       if (!channelData || !channelData.chatroom?.id) {
         throw new Error(`Canal "${slug}" não encontrado na Kick.`);
       }
@@ -155,9 +158,11 @@ export class KickChatService extends EventEmitter {
 
       // Obtém credenciais de conexão do Pusher dinamicamente
       const credentials = await this.fetchRealtimeCredentials(chatroomId);
+      if (generation !== this.connectionGeneration) return false;
       await this.connectPusher(credentials.appKey, credentials.cluster, chatroomId);
-      return true;
+      return generation === this.connectionGeneration;
     } catch (err: any) {
+      if (generation !== this.connectionGeneration) return false;
       console.error(`[KickChat] Falha ao conectar ao canal ${slug}: ${err.message}`);
       this.updateStatus('error', err.message);
       this.scheduleReconnect();
@@ -166,6 +171,7 @@ export class KickChatService extends EventEmitter {
   }
 
   public leaveChannel(): void {
+    this.connectionGeneration++;
     this.isIntentionalDisconnect = true;
     this.clearTimers();
 

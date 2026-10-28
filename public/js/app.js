@@ -5,8 +5,7 @@
     isConnectedWs: false,
     autoScroll: true,
     unreadWhilePaused: 0,
-    initialStatusesReceived: false,
-    pendingPlatform: null,
+    pendingPlatforms: new Set(),
     licenseToken: null,
     twitchStatus: { status: 'disconnected', channel: null },
     youtubeStatus: { status: 'disconnected', channel: null, hasActiveLive: false },
@@ -223,17 +222,31 @@
 
   // Carrega preferências salvas no localStorage
   function loadSavedSettings() {
-    const savedTwitch = localStorage.getItem('platchat_twitch_channel');
+    const savedTwitch = getSavedChannel('platchat_twitch_channel');
     if (savedTwitch && elements.twitchInput) elements.twitchInput.value = savedTwitch;
 
-    const savedYouTube = localStorage.getItem('platchat_youtube_channel');
+    const savedYouTube = getSavedChannel('platchat_youtube_channel');
     if (savedYouTube && elements.youtubeInput) elements.youtubeInput.value = savedYouTube;
 
-    const savedKick = localStorage.getItem('platchat_kick_channel');
+    const savedKick = getSavedChannel('platchat_kick_channel');
     if (savedKick && elements.kickInput) elements.kickInput.value = savedKick;
 
-    const savedTikTok = localStorage.getItem('platchat_tiktok_channel');
+    const savedTikTok = getSavedChannel('platchat_tiktok_channel');
     if (savedTikTok && elements.tiktokInput) elements.tiktokInput.value = savedTikTok;
+  }
+
+  function getSavedChannel(storageKey) {
+    const channel = sessionStorage.getItem(storageKey);
+    if (channel) return channel;
+
+    const legacyChannel = localStorage.getItem(storageKey);
+    if (legacyChannel) {
+      sessionStorage.setItem(storageKey, legacyChannel);
+      localStorage.removeItem(storageKey);
+      return legacyChannel;
+    }
+
+    return null;
   }
 
   // Gerenciamento da conexão WebSocket
@@ -246,6 +259,7 @@
     state.ws.onopen = () => {
       state.isConnectedWs = true;
       console.log('[PlatChat Client] Conectado ao servidor WebSocket');
+      restoreSavedConnections();
     };
 
     state.ws.onmessage = (event) => {
@@ -273,6 +287,22 @@
       state.ws.send(JSON.stringify(command));
     } else {
       console.warn('[PlatChat Client] WebSocket não está pronto para enviar comando.');
+    }
+  }
+
+  function restoreSavedConnections() {
+    const savedChannels = [
+      ['twitch', 'platchat_twitch_channel'],
+      ['youtube', 'platchat_youtube_channel'],
+      ['kick', 'platchat_kick_channel'],
+      ['tiktok', 'platchat_tiktok_channel']
+    ];
+
+    for (const [platform, storageKey] of savedChannels) {
+      const channel = sessionStorage.getItem(storageKey);
+      if (!channel) continue;
+      state.pendingPlatforms.add(platform);
+      sendCommand({ action: 'subscribe', platform, channel });
     }
   }
 
@@ -336,17 +366,17 @@
 
     const hasConnectedPlatform = [statuses.twitch, statuses.youtube, statuses.kick, statuses.tiktok]
       .some((status) => status?.status === 'connected');
-    const pendingStatus = state.pendingPlatform ? statuses[state.pendingPlatform] : null;
+    for (const platform of state.pendingPlatforms) {
+      const status = statuses[platform];
+      if (status?.status === 'connected' || status?.status === 'error') {
+        state.pendingPlatforms.delete(platform);
+      }
+    }
 
-    if ((!state.initialStatusesReceived && hasConnectedPlatform)
-      || pendingStatus?.status === 'connected') {
+    if (hasConnectedPlatform) {
       setCompactMode(true);
       elements.configDrawer.classList.remove('open');
     }
-    if (pendingStatus?.status === 'connected' || pendingStatus?.status === 'error') {
-      state.pendingPlatform = null;
-    }
-    state.initialStatusesReceived = true;
   }
 
   // Status Twitch
@@ -565,9 +595,11 @@
 
       if (state.twitchStatus.status === 'connected') {
         sendCommand({ action: 'unsubscribe', platform: 'twitch' });
+        sessionStorage.removeItem('platchat_twitch_channel');
+        state.pendingPlatforms.delete('twitch');
       } else {
-        localStorage.setItem('platchat_twitch_channel', channel);
-        state.pendingPlatform = 'twitch';
+        sessionStorage.setItem('platchat_twitch_channel', channel);
+        state.pendingPlatforms.add('twitch');
         sendCommand({ action: 'subscribe', platform: 'twitch', channel });
       }
     });
@@ -583,9 +615,11 @@
 
       if (state.youtubeStatus.status === 'connected') {
         sendCommand({ action: 'unsubscribe', platform: 'youtube' });
+        sessionStorage.removeItem('platchat_youtube_channel');
+        state.pendingPlatforms.delete('youtube');
       } else {
-        localStorage.setItem('platchat_youtube_channel', channel);
-        state.pendingPlatform = 'youtube';
+        sessionStorage.setItem('platchat_youtube_channel', channel);
+        state.pendingPlatforms.add('youtube');
         sendCommand({ action: 'subscribe', platform: 'youtube', channel });
       }
     });
@@ -601,9 +635,11 @@
 
       if (state.kickStatus.status === 'connected') {
         sendCommand({ action: 'unsubscribe', platform: 'kick' });
+        sessionStorage.removeItem('platchat_kick_channel');
+        state.pendingPlatforms.delete('kick');
       } else {
-        localStorage.setItem('platchat_kick_channel', channel);
-        state.pendingPlatform = 'kick';
+        sessionStorage.setItem('platchat_kick_channel', channel);
+        state.pendingPlatforms.add('kick');
         sendCommand({ action: 'subscribe', platform: 'kick', channel });
       }
     });
@@ -619,9 +655,11 @@
 
       if (state.tiktokStatus.status === 'connected') {
         sendCommand({ action: 'unsubscribe', platform: 'tiktok' });
+        sessionStorage.removeItem('platchat_tiktok_channel');
+        state.pendingPlatforms.delete('tiktok');
       } else {
-        localStorage.setItem('platchat_tiktok_channel', channel);
-        state.pendingPlatform = 'tiktok';
+        sessionStorage.setItem('platchat_tiktok_channel', channel);
+        state.pendingPlatforms.add('tiktok');
         sendCommand({ action: 'subscribe', platform: 'tiktok', channel });
       }
     });
