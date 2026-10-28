@@ -69,6 +69,9 @@
     connectWebSocket();
     loadSubscriptionPrice();
     handleCheckoutReturn();
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) handleCheckoutReturn();
+    });
     const dockMode = new URLSearchParams(window.location.search).get('dock') === '1'
       || localStorage.getItem('platchat_dock_mode') === 'true';
     setCompactMode(dockMode, false);
@@ -156,6 +159,22 @@
       : `${license.trial?.active ? 'Teste grátis até' : 'Acesso até'} ${expiration.toLocaleDateString('pt-BR', { dateStyle: 'long' })}`;
     document.getElementById('premium-expiration').textContent = dateText;
     document.getElementById('premium-banner-expiration').textContent = dateText;
+    const cancellationScheduled = license.cancel_at_period_end === true;
+    const statusLabel = cancellationScheduled ? 'Cancelamento agendado' : 'Plano ativo · Premium';
+    document.getElementById('premium-status-label').textContent = statusLabel;
+    document.getElementById('premium-banner-label').textContent = statusLabel;
+    if (cancellationScheduled) {
+      const accessDate = Number.isNaN(expiration.getTime())
+        ? ''
+        : ` · acesso até ${expiration.toLocaleDateString('pt-BR', { dateStyle: 'long' })}`;
+      const cancellationDate = license.cancel_at ? new Date(license.cancel_at) : expiration;
+      const formattedCancellationDate = Number.isNaN(cancellationDate.getTime())
+        ? ''
+        : ` ${cancellationDate.toLocaleDateString('pt-BR', { dateStyle: 'long' })}`;
+      const cancellationText = `Cancelamento agendado para${formattedCancellationDate}${accessDate}`;
+      document.getElementById('premium-expiration').textContent = cancellationText;
+      document.getElementById('premium-banner-expiration').textContent = cancellationText;
+    }
   }
 
   async function openCustomerPortal() {

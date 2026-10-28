@@ -82,7 +82,11 @@ export class YouTubePublicChatService extends EventEmitter {
       liveChatInstance.on('error', (err: any) => {
         if (generation !== this.connectionGeneration) return;
         const msg = err?.message || String(err);
-        console.warn(`[YouTubeChat] Erro no leitor de chat do YouTube: ${msg}`);
+        const code = typeof err?.code === 'string' ? ` (${err.code})` : '';
+        const responseStatus = typeof err?.response?.status === 'number'
+          ? ` [HTTP ${err.response.status}]`
+          : '';
+        console.warn(`[YouTubeChat] Erro no leitor de chat do YouTube${responseStatus}${code}: ${msg}`);
         if (!this.isIntentionalDisconnect && this.status !== 'connected') {
           this.updateStatus('error', msg);
           this.scheduleReconnect();
@@ -105,7 +109,10 @@ export class YouTubePublicChatService extends EventEmitter {
         return false;
       }
       if (!ok) {
-        throw new Error('Não foi possível iniciar o chat. Verifique se o canal está ao vivo.');
+        if (this.status !== 'error') {
+          throw new Error('Não foi possível iniciar o chat. Verifique se o canal está ao vivo.');
+        }
+        return false;
       }
 
       return true;

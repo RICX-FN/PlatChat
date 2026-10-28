@@ -87,6 +87,8 @@ const createLicenseToken = (subscription: Stripe.Subscription, status = subscrip
       ends_at: trialEnd ? new Date(trialEnd * 1000).toISOString() : null,
       period_days: trialStart && trialEnd ? Math.ceil((trialEnd - trialStart) / 86400) : 0
     },
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    cancel_at: subscription.cancel_at ? new Date(subscription.cancel_at * 1000).toISOString() : null,
     expira_em: new Date(expiration * 1000).toISOString(),
     exp: expiration
   };
