@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Reúna os chats das suas lives em um único dock no OBS Studio. Comece seu teste grátis de 7 dias.">
+  <meta name="description" content="Reúna os chats das suas lives em um único dock no OBS Studio.">
   <title>PlatChat — Seu chat, em todo lugar</title>
   <link rel="shortcut icon" href="./assets/favicon.png" type="image/x-icon">
   <link rel="stylesheet" href="css/style.css">
@@ -39,7 +39,7 @@
             </span>
             <a class="btn-secondary" href="#obs-guide">Como funciona <span aria-hidden="true">↓</span></a>
           </div>
-          <p class="pricing-note"><strong>7 dias de teste</strong> · depois <span id="subscription-price">preço mostrado no checkout</span> por mês · assinatura e cobrança pelo Stripe</p>
+          <p class="pricing-note"><strong>7 dias grátis</strong> · depois <span id="subscription-price">preço mostrado no checkout</span> · cobrança mensal pelo Stripe</p>
           <div class="trust-row"><span>✓ Sem login para conectar YouTube</span><span>✓ Sem banco de dados de usuários</span></div>
         </div>
         <div class="hero-visual" aria-label="Prévia do chat unificado">
@@ -56,14 +56,18 @@
         </div>
       </section>
 
-      <section class="trial-banner glass-card" aria-label="Assinatura mensal PlatChat">
+      <section class="trial-banner glass-card" aria-label="Planos PlatChat">
         <div class="trial-icon">✦</div>
-        <div class="trial-copy"><span class="eyebrow">ASSINATURA DO PLANO MENSAL</span><h2>Ative seu plano PlatChat.</h2><p>Cadastre o pagamento no Stripe. Você tem 7 dias de teste; depois, a assinatura mensal é cobrada automaticamente.</p></div>
+        <div class="trial-copy"><span class="eyebrow">ESCOLHA SEU PLANO</span><h2>Experimente o PlatChat.</h2><p>Use por 7 dias grátis. Depois, a cobrança recorrente do plano escolhido começa automaticamente, conforme indicado no checkout do Stripe.</p></div>
+        <div class="plan-options" role="group" aria-label="Planos disponíveis">
+          <button id="plan-monthly" class="plan-option selected" type="button" aria-pressed="true"><strong>Mensal</strong><span id="monthly-plan-price">ver preço</span></button>
+          <button id="plan-annual" class="plan-option" type="button" disabled aria-disabled="true"><strong>Anual</strong><span id="annual-plan-price">em breve</span></button>
+        </div>
         <button id="btn-subscribe-banner" class="btn-primary" type="button">Assinar plano mensal <span aria-hidden="true">→</span></button>
       </section>
       <section id="premium-banner" class="premium-banner glass-card hidden" aria-label="Plano ativo">
-        <div class="trial-icon">✦</div>
-        <div class="trial-copy"><span class="eyebrow">ASSINATURA CONFIRMADA</span><h2>Seu PlatChat Premium está ativo.</h2><p id="premium-banner-expiration"></p></div>
+        <span class="premium-badge"><span aria-hidden="true">✦</span> Plano ativo · Premium</span>
+        <p id="premium-banner-expiration" class="premium-expiration"></p>
         <button id="btn-customer-portal-banner" class="btn-secondary" type="button">Gerenciar assinatura <span aria-hidden="true">↗</span></button>
       </section>
 
@@ -91,11 +95,11 @@
             <div id="config-drawer" class="config-drawer">
               <div class="config-grid">
                 <div class="config-group"><div class="config-title"><span class="dot-platform twitch-dot"></span><strong>Twitch</strong></div><div class="input-row"><input type="text" id="twitch-channel-input" placeholder="ex: gaules, loud_coringa" autocomplete="off" spellcheck="false"><button id="btn-twitch-connect" class="btn btn-twitch">Conectar</button></div></div>
-                <div class="config-group"><div class="config-title"><span class="dot-platform youtube-dot"></span><strong>YouTube</strong><span class="free-badge">sem login</span></div><div class="input-row"><input type="text" id="youtube-channel-input" placeholder="ex: @LofiGirl ou link da live" autocomplete="off" spellcheck="false"><button id="btn-youtube-connect" class="btn btn-youtube">Conectar</button></div><div class="hint-text">Informe o @handle, ID do canal ou URL da live pública.</div></div>
+                <div class="config-group"><div class="config-title"><span class="dot-platform youtube-dot"></span><strong>YouTube</strong></div><div class="input-row"><input type="text" id="youtube-channel-input" placeholder="ex: @LofiGirl ou link da live" autocomplete="off" spellcheck="false"><button id="btn-youtube-connect" class="btn btn-youtube">Conectar</button></div><div class="hint-text">Informe o @handle, ID do canal ou URL da live pública.</div></div>
                 <div class="config-group"><div class="config-title"><span class="dot-platform kick-dot"></span><strong>Kick</strong></div><div class="input-row"><input type="text" id="kick-channel-input" placeholder="ex: xqc ou link kick.com" autocomplete="off" spellcheck="false"><button id="btn-kick-connect" class="btn btn-kick">Conectar</button></div></div>
                 <div class="config-group"><div class="config-title"><span class="dot-platform tiktok-dot"></span><strong>TikTok Live</strong></div><div class="input-row"><input type="text" id="tiktok-channel-input" placeholder="ex: nome do usuário" autocomplete="off" spellcheck="false"><button id="btn-tiktok-connect" class="btn btn-tiktok">Conectar</button></div></div>
               </div>
-              <div class="drawer-footer"><span class="drawer-footer-label">Testar:</span><button id="btn-test-twitch" class="btn btn-sm btn-ghost">Twitch</button><button id="btn-test-youtube" class="btn btn-sm btn-ghost">YouTube</button><button id="btn-test-kick" class="btn btn-sm btn-ghost">Kick</button><button id="btn-test-tiktok" class="btn btn-sm btn-ghost">TikTok</button><button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger">Limpar chat</button></div>
+              <div class="drawer-footer"><span class="drawer-footer-label">Testar:</span><button id="btn-test-twitch" class="btn btn-sm btn-ghost">Twitch</button><button id="btn-test-youtube" class="btn btn-sm btn-ghost">YouTube</button><button id="btn-test-kick" class="btn btn-sm btn-ghost">Kick</button><button id="btn-test-tiktok" class="btn btn-sm btn-ghost">TikTok</button><button id="btn-clear-fields" class="btn btn-sm btn-ghost btn-danger">Limpar campos</button><button id="btn-clear-chat" class="btn btn-sm btn-ghost btn-danger">Limpar chat</button></div>
             </div>
           </header>
           <div id="chat-container" class="chat-container"><div id="messages-list" class="messages-list">

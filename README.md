@@ -59,12 +59,15 @@ PlatChat/
 
 Configure `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`,
 `JWT_SECRET` (com pelo menos 32 caracteres aleatórios) e `CLIENT_URL` no ambiente.
+O preço mensal está em `STRIPE_PRICE_ID`; quando disponível, configure também
+`STRIPE_ANNUAL_PRICE_ID` com o ID do preço recorrente anual no Stripe.
 O endpoint do webhook do Stripe é `/api/stripe/webhook`; configure-o para os eventos
 `checkout.session.completed`, `customer.subscription.updated` e
-`customer.subscription.deleted`. O checkout oferece sete dias de teste, e o preço
-recorrente configurado é exibido no painel antes do checkout. O PlatChat não mantém
-uma base de dados: tokens de licença assinados e o estado da assinatura são
-armazenados nos metadados do Stripe.
+`customer.subscription.deleted`. O checkout inclui sete dias de teste grátis;
+depois, começa a cobrança recorrente do plano escolhido. Preços configurados são
+exibidos no painel antes do checkout. O PlatChat não mantém uma base de dados:
+tokens de licença assinados e o estado da assinatura são armazenados nos
+metadados do Stripe.
 
 ### 1. Iniciar em desenvolvimento
 ```bash

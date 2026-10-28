@@ -84,7 +84,7 @@ const createLicenseToken = (subscription: Stripe.Subscription, status = subscrip
       active: status === 'trialing',
       starts_at: trialStart ? new Date(trialStart * 1000).toISOString() : null,
       ends_at: trialEnd ? new Date(trialEnd * 1000).toISOString() : null,
-      period_days: 7
+      period_days: trialStart && trialEnd ? Math.ceil((trialEnd - trialStart) / 86400) : 0
     },
     expira_em: new Date(expiration * 1000).toISOString(),
     exp: expiration
@@ -163,11 +163,27 @@ app.get('/api/stripe/price', async (_req, res) => {
       throw new Error('Configured Stripe price must be billed monthly');
     }
     if (price.unit_amount === null) throw new Error('Configured Stripe price has no fixed amount');
+    let annual: { amount: number; currency: string; interval: string; interval_count: number } | null = null;
+    const annualPriceId = process.env.STRIPE_ANNUAL_PRICE_ID;
+    if (annualPriceId) {
+      const annualPrice = await getStripe().prices.retrieve(annualPriceId);
+      if (annualPrice.recurring?.interval !== 'year' || annualPrice.recurring.interval_count !== 1) {
+        throw new Error('Configured Stripe annual price must be billed yearly');
+      }
+      if (annualPrice.unit_amount === null) throw new Error('Configured Stripe annual price has no fixed amount');
+      annual = {
+        amount: annualPrice.unit_amount,
+        currency: annualPrice.currency,
+        interval: annualPrice.recurring.interval,
+        interval_count: annualPrice.recurring.interval_count
+      };
+    }
     return res.json({
       amount: price.unit_amount,
       currency: price.currency,
       interval: price.recurring?.interval,
-      interval_count: price.recurring?.interval_count
+      interval_count: price.recurring?.interval_count,
+      annual
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Stripe price is unavailable';
@@ -176,8 +192,14 @@ app.get('/api/stripe/price', async (_req, res) => {
   }
 });
 
-app.post('/api/stripe/create-checkout-session', async (_req, res) => {
-  const missingConfig = ['STRIPE_SECRET_KEY', 'STRIPE_PRICE_ID', 'CLIENT_URL']
+app.post('/api/stripe/create-checkout-session', async (req, res) => {
+  const requestedPlan = req.query.plan;
+  if (requestedPlan !== undefined && requestedPlan !== 'monthly' && requestedPlan !== 'annual') {
+    return res.status(400).json({ error: 'Plano inválido' });
+  }
+  const plan = requestedPlan === 'annual' ? 'annual' : 'monthly';
+  const selectedPriceEnv = plan === 'annual' ? 'STRIPE_ANNUAL_PRICE_ID' : 'STRIPE_PRICE_ID';
+  const missingConfig = ['STRIPE_SECRET_KEY', selectedPriceEnv, 'CLIENT_URL']
     .filter((name) => !process.env[name]);
   if (missingConfig.length) {
     console.error(`[Stripe] Checkout configuration missing: ${missingConfig.join(', ')}`);
@@ -187,7 +209,7 @@ app.post('/api/stripe/create-checkout-session', async (_req, res) => {
   }
 
   try {
-    const priceId = process.env.STRIPE_PRICE_ID;
+    const priceId = process.env[selectedPriceEnv];
     const clientUrl = process.env.CLIENT_URL;
     if (!priceId || !clientUrl) throw new Error('Stripe checkout configuration is incomplete');
     const session = await getStripe().checkout.sessions.create({

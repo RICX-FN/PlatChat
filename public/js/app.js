@@ -6,6 +6,8 @@
     autoScroll: true,
     unreadWhilePaused: 0,
     pendingPlatforms: new Set(),
+    hasAutoCompacted: sessionStorage.getItem('platchat_auto_compacted') === 'true',
+    selectedPlan: 'monthly',
     licenseToken: null,
     twitchStatus: { status: 'disconnected', channel: null },
     youtubeStatus: { status: 'disconnected', channel: null, hasActiveLive: false },
@@ -47,6 +49,7 @@
     btnTestKick: document.getElementById('btn-test-kick'),
     btnTestTiktok: document.getElementById('btn-test-tiktok'),
     btnClearChat: document.getElementById('btn-clear-chat'),
+    btnClearFields: document.getElementById('btn-clear-fields'),
 
     // Chat
     chatContainer: document.getElementById('chat-container'),
@@ -86,16 +89,26 @@
       const response = await fetch('/api/stripe/price');
       if (!response.ok) return;
       const price = await response.json();
-      const formatter = new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: price.currency.toUpperCase()
-      });
-      const amount = formatter.format(price.amount / (10 ** formatter.resolvedOptions().maximumFractionDigits));
-      const intervals = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' };
-      const interval = intervals[price.interval] || price.interval;
-      const pluralInterval = interval === 'mês' ? 'meses' : `${interval}s`;
-      const cadence = price.interval_count > 1 ? `a cada ${price.interval_count} ${pluralInterval}` : `/${interval}`;
-      document.getElementById('subscription-price').textContent = `${amount}${cadence}`;
+      const formatPrice = (plan) => {
+        const formatter = new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: plan.currency.toUpperCase()
+        });
+        const amount = formatter.format(plan.amount / (10 ** formatter.resolvedOptions().maximumFractionDigits));
+        const intervals = { day: 'dia', week: 'semana', month: 'mês', year: 'ano' };
+        const interval = intervals[plan.interval] || plan.interval;
+        const pluralInterval = interval === 'mês' ? 'meses' : `${interval}s`;
+        const cadence = plan.interval_count > 1 ? `a cada ${plan.interval_count} ${pluralInterval}` : `/${interval}`;
+        return `${amount}${cadence}`;
+      };
+      const monthlyPrice = formatPrice(price);
+      document.getElementById('subscription-price').textContent = monthlyPrice;
+      document.getElementById('monthly-plan-price').textContent = monthlyPrice;
+      if (price.annual) {
+        document.getElementById('plan-annual').disabled = false;
+        document.getElementById('plan-annual').setAttribute('aria-disabled', 'false');
+        document.getElementById('annual-plan-price').textContent = formatPrice(price.annual);
+      }
     } catch (error) {
       console.error('[PlatChat] Não foi possível carregar o preço da assinatura:', error);
     }
@@ -105,7 +118,7 @@
     const buttons = [document.getElementById('btn-subscribe'), document.getElementById('btn-subscribe-banner')];
     buttons.forEach((button) => { button.disabled = true; });
     try {
-      const response = await fetch('/api/stripe/create-checkout-session', { method: 'POST' });
+      const response = await fetch(`/api/stripe/create-checkout-session?plan=${state.selectedPlan}`, { method: 'POST' });
       const result = await response.json();
       if (!response.ok || !result.url) {
         throw new Error(result.error || 'Não foi possível abrir o checkout do plano mensal.');
@@ -373,7 +386,9 @@
       }
     }
 
-    if (hasConnectedPlatform) {
+    if (hasConnectedPlatform && !state.hasAutoCompacted) {
+      state.hasAutoCompacted = true;
+      sessionStorage.setItem('platchat_auto_compacted', 'true');
       setCompactMode(true);
       elements.configDrawer.classList.remove('open');
     }
@@ -578,6 +593,8 @@
     document.getElementById('btn-subscribe-banner').addEventListener('click', startCheckout);
     document.getElementById('btn-customer-portal').addEventListener('click', openCustomerPortal);
     document.getElementById('btn-customer-portal-banner').addEventListener('click', openCustomerPortal);
+    document.getElementById('plan-monthly').addEventListener('click', () => selectPlan('monthly'));
+    document.getElementById('plan-annual').addEventListener('click', () => selectPlan('annual'));
 
     elements.btnToggleCompact.addEventListener('click', () => {
       setCompactMode(!document.body.classList.contains('dock-mode'));
@@ -692,6 +709,8 @@
       elements.scrollBottomPill.classList.add('hidden');
     });
 
+    elements.btnClearFields.addEventListener('click', clearChannelFields);
+
     // Botão Flutuante de Scroll
     elements.btnScrollBottom.addEventListener('click', () => {
       scrollToBottom();
@@ -707,6 +726,36 @@
         state.autoScroll = false;
       }
     });
+  }
+
+  function selectPlan(plan) {
+    state.selectedPlan = plan;
+    for (const option of ['monthly', 'annual']) {
+      const selected = option === plan;
+      const button = document.getElementById(`plan-${option}`);
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    }
+    const label = plan === 'annual' ? 'Assinar plano anual' : 'Assinar plano mensal';
+    for (const button of [document.getElementById('btn-subscribe'), document.getElementById('btn-subscribe-banner')]) {
+      button.firstChild.textContent = `${label} `;
+    }
+  }
+
+  function clearChannelFields() {
+    const channels = [
+      ['twitch', elements.twitchInput, 'platchat_twitch_channel'],
+      ['youtube', elements.youtubeInput, 'platchat_youtube_channel'],
+      ['kick', elements.kickInput, 'platchat_kick_channel'],
+      ['tiktok', elements.tiktokInput, 'platchat_tiktok_channel']
+    ];
+
+    for (const [platform, input, storageKey] of channels) {
+      input.value = '';
+      sessionStorage.removeItem(storageKey);
+      state.pendingPlatforms.delete(platform);
+      sendCommand({ action: 'unsubscribe', platform });
+    }
   }
 
   // Utilitários

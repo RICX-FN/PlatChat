@@ -691,16 +691,14 @@ body {
 .btn-primary:disabled { opacity: .65; cursor: wait; }
 .btn-secondary { background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.11); color: #d3d0dd; }
 .btn-secondary:hover { background: rgba(255,255,255,.08); }
-.premium-status { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.premium-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid rgba(113,233,157,.3); border-radius: 999px; background: rgba(42,172,99,.12); color: #a8f0c2; font-size: 11px; font-weight: 700; }
+.premium-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.premium-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid rgba(113,233,157,.3); border-radius: 999px; background: rgba(42,172,99,.12); color: #a8f0c2; font-size: 10px; font-weight: 700; }
 .premium-badge span { color: #86e6ab; }
 .premium-expiration { color: #a7a3b3; font-size: 11px; }
-.premium-status .btn-secondary { min-height: 36px; padding: 0 12px; font-size: 11px; }
-.premium-banner { display: flex; align-items: center; gap: 20px; margin-top: 20px; padding: 25px 30px; border-radius: 15px; }
-.premium-banner .trial-copy { flex: 1; }
-.premium-banner .trial-copy h2 { margin-top: 5px; font: 600 20px 'Space Grotesk', sans-serif; }
-.premium-banner .trial-copy p { margin-top: 5px; color: #a8e8bb; font-size: 11px; }
-.premium-banner .btn-secondary { white-space: nowrap; }
+.premium-status .btn-secondary { min-height: 32px; padding: 0 10px; font-size: 10px; }
+.premium-banner { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin-top: 12px; padding: 10px 14px; border-radius: 10px; }
+.premium-banner .premium-expiration { flex: 1; }
+.premium-banner .btn-secondary { min-height: 32px; padding: 0 10px; white-space: nowrap; font-size: 10px; }
 .pricing-note { margin-top: 15px; color: #8e8b9b; font-size: 11px; }
 .pricing-note strong { color: #e2d5ff; }
 .trust-row { display: flex; flex-wrap: wrap; gap: 19px; margin-top: 25px; color: #8e8b9b; font-size: 11px; }
@@ -736,9 +734,12 @@ body {
 .trial-copy { flex: 1; }
 .trial-copy h2 { margin-top: 5px; font: 600 20px 'Space Grotesk', sans-serif; }
 .trial-copy p { margin-top: 5px; color: #9693a3; font-size: 11px; }
-.premium-banner { flex-wrap: wrap; padding: 20px; }
-.premium-banner .trial-copy { flex-basis: calc(100% - 65px); }
-.premium-banner .btn-secondary { width: 100%; }
+.plan-options { display: flex; gap: 8px; }
+.plan-option { display: flex; min-width: 118px; flex-direction: column; gap: 3px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.11); border-radius: 9px; background: rgba(255,255,255,.035); color: #d3d0dd; text-align: left; cursor: pointer; }
+.plan-option strong { font-size: 11px; }
+.plan-option span { color: #9995a6; font-size: 10px; }
+.plan-option.selected { border-color: rgba(169,133,255,.65); background: rgba(143,89,235,.16); }
+.plan-option:disabled { opacity: .58; cursor: not-allowed; }
 
 .workspace-section { padding: 92px 0 88px; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
@@ -758,16 +759,16 @@ body {
 .small-mark { width: 27px; height: 27px; border-radius: 8px; font-size: 16px; }
 .connection-label { display: flex; align-items: center; gap: 7px; color: #858293; font-size: 10px; }
 .btn-icon { width: 29px; height: 29px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: #c8c4d2; font-size: 16px; }
-.config-drawer { padding: 16px 18px; background: rgba(11,12,19,.78); }
-.config-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px 22px; }
-.config-group { gap: 8px; }
-.config-title { color: #d6d3df; font-size: 11px; }
-.input-row { gap: 8px; }
-input[type="text"] { min-height: 36px; border-radius: 7px; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); padding: 7px 10px; font-size: 11px; }
+.config-drawer { padding: 10px 14px; background: rgba(11,12,19,.78); gap: 8px; }
+.config-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px 16px; }
+.config-group { display: grid; grid-template-columns: 76px minmax(0,1fr); grid-template-areas: "title input" ". hint"; align-items: center; gap: 3px 8px; }
+.config-title { grid-area: title; color: #d6d3df; font-size: 11px; }
+.input-row { min-width: 0; gap: 6px; }
+.config-group .input-row { grid-area: input; }
+input[type="text"] { min-width: 0; min-height: 32px; border-radius: 7px; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); padding: 6px 8px; font-size: 11px; }
 input[type="text"]:focus { border-color: #9a72ed; }
-.btn { border-radius: 7px; padding: 7px 11px; font-size: 10px; }
-.free-badge { padding: 3px 6px; color: #9debb3; background: rgba(0,230,118,.09); border-radius: 4px; font-size: 8px; }
-.hint-text { font-size: 9px; }
+.btn { border-radius: 7px; padding: 6px 9px; font-size: 10px; }
+.config-group .hint-text { grid-area: hint; min-width: 0; font-size: 9px; line-height: 1.35; }
 .drawer-footer { flex-wrap: wrap; }
 .chat-container { height: 390px; padding: 18px; }
 .messages-list { justify-content: flex-start; gap: 7px; }
@@ -816,10 +817,17 @@ input[type="text"]:focus { border-color: #9a72ed; }
   .trial-banner { flex-wrap: wrap; padding: 20px; }
   .trial-copy { flex-basis: calc(100% - 65px); }
   .trial-copy h2 { font-size: 17px; }
+  .plan-options { width: 100%; }
+  .plan-option { flex: 1; min-width: 0; }
   .trial-banner .btn-primary { width: 100%; }
+  .premium-banner { gap: 8px; padding: 9px 10px; }
+  .premium-banner .premium-expiration { flex-basis: calc(100% - 120px); }
+  .premium-banner .btn-secondary { margin-left: auto; }
   .workspace-section { padding: 66px 0; }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .config-grid { grid-template-columns: 1fr; }
+  .config-group { grid-template-columns: 64px minmax(0,1fr); gap: 3px 5px; }
+  .config-group .btn { padding-right: 7px; padding-left: 7px; }
   .chat-container { height: 370px; padding: 12px; }
   .obs-section { grid-template-columns: 1fr; gap: 25px; padding: 44px 0 62px; }
   .obs-intro h2 { font-size: 32px; }
@@ -847,6 +855,7 @@ body.dock-mode {
 .dock-mode .site-nav,
 .dock-mode .hero-section,
 .dock-mode .trial-banner,
+.dock-mode .premium-banner,
 .dock-mode .section-heading,
 .dock-mode .obs-section,
 .dock-mode .site-footer {
